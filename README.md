@@ -237,7 +237,11 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 
 
 ### Desafios Encontrados e Resoluções
-*A ser preenchido durante a criação da skill.*
+- **Desafio 1: Suporte a Múltiplas Tecnologias (Agnosticismo):** Instruir a IA a refatorar em linguagens diferentes sem cruzar sintaxes. *Resolução:* Criamos um playbook "bilíngue" com receitas de "Antes/Depois" isoladas para Python e Node.js.
+- **Desafio 2: Projetos com Estruturas Iniciais Diferentes:** Evitar reestruturações redundantes ou deletar arquivos errados em pastas pré-existentes. *Resolução:* Implementamos heurísticas que avaliam o layout inicial de diretórios e adaptam as tarefas de reestruturação da Fase 3.
+- **Desafio 3: Validação Dinâmica de Funcionamento (Boot/Endpoints):** Automatizar checagens genéricas de boot e conectividade em portas e ecossistemas distintos. *Resolução:* O agente inspeciona arquivos manifestos para orquestrar comandos dinâmicos (npm start vs python app.py) e executa testes via curl.
+- **Desafio 4: Evitar Sobrecarga de Contexto do Prompt:** Impedir perda de foco ou alucinações no `SKILL.md` por excesso de regras. *Resolução:* Dividimos a skill em 5 sub-arquivos Markdown lidos sob demanda de referência.
+
 
 ---
 
