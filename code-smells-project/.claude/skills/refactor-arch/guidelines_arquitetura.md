@@ -39,4 +39,4 @@ src/
 
 ### 5. Middlewares (`src/middlewares/`)
 - Processa fluxos transversais (Cross-cutting Concerns).
-- Intercepta erros inesperados para evitar vazamento de stack traces e retornar respostas padronizadas `500 Internal Server Error`.
+- Intercepta erros inesperados para retornar respostas padronizadas `500 Internal Server Error` sem vazar logs e segredos internos.

@@ -20,20 +20,13 @@ Este documento define regras heurísticas para detectar a stack tecnológica e m
 
 ## 2. Detecção de Banco de Dados
 
-- **SQLite:** Presença de arquivos `.db` ou `sqlite3` importado/requerido, conexões `:memory:`.
-- **PostgreSQL / MySQL:** Presença de dependências como `pg`, `mysql2`, `psycopg2` ou strings de conexão contendo `postgresql://` ou `mysql://`.
+- **SQLite:** Presença de arquivos `.db`, dependência de `sqlite3` no manifesto ou conexões em `:memory:`.
+- **PostgreSQL / MySQL:** Presença de dependências como `pg`, `mysql2`, `psycopg2` no manifesto.
 
 ---
 
 ## 3. Mapeamento de Arquitetura
 
 Analise a estrutura de diretórios e o nível de separação de responsabilidades (camadas):
-
-- **Monolito de Arquivo Único (God File):**
-  - Todo o código de roteamento, lógica de negócio, manipulação de banco de dados e controle de respostas está em um único arquivo (ex: `app.py` ou `AppManager.js`).
-- **Arquitetura Acoplada (Sem MVC):**
-  - Roteamento direto acoplado a funções de consulta ao banco de dados no mesmo arquivo.
-  - Mistura de lógica de domínio em métodos que deveriam apenas ler/escrever dados (Models).
-  - Segredos misturados com código executável.
-- **Arquitetura Parcialmente Separada:**
-  - Divisão de arquivos baseada em camadas (ex: diretórios `models`, `routes`, `services`) mas sem aderência estrita a injeção de dependências, tratamento de erros centralizado ou isolamento de segredos.
+- **God Class / Monolito Sem MVC:** Todo o código de roteamento, lógica de negócio, consultas SQL brutas e controle de respostas está chumbado em um único arquivo (ex: `AppManager.js` ou `app.py`).
+- **Arquitetura Parcialmente Separada:** Existe alguma pasta (`models/`, `routes/`, `services/`), mas sem tratamento centralizado de erros, injeção de dependências ou isolamento de segredos.

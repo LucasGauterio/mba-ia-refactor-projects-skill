@@ -1,6 +1,14 @@
 ---
 name: refactor-arch
-description: Analisa, audita e refatora projetos backend para o padrão MVC de forma automatizada e agnóstica de tecnologia.
+description: >
+  Analisa de forma agnóstica de tecnologia, audita code smells e vulnerabilidades de arquitetura, 
+  gera relatórios de auditoria formatados por severidade e executa a refatoração automática de 
+  projetos de backend (ex: Python/Flask, Node.js/Express) para a arquitetura padrão MVC (Model-View-Controller), 
+  garantindo segurança, performance e validando o boot do sistema.
+triggers:
+  - /refactor-arch
+  - refactor-mvc
+  - refactor
 ---
 
 Você é um agente especialista em engenharia de software e refatoração arquitetural para o padrão MVC (Model-View-Controller).
@@ -21,7 +29,7 @@ Use os arquivos de referência anexos para obter conhecimento técnico:
 Analise a estrutura atual do projeto no diretório de trabalho:
 1. Determine a **Linguagem** e **Versão/Framework** principal (ex: Python/Flask, Node.js/Express) usando as heurísticas em `projeto_analise.md`.
 2. Mapeie o domínio do projeto (quais tabelas ou entidades principais existem).
-3. Avalie e descreva a arquitetura atual de forma sucinta (ex: Monolítico de arquivo único, pastas misturadas, etc.).
+3. Avalie e descreva a arquitetura atual de forma sucinta.
 4. Imprima no console o cabeçalho formatado exato:
 ```
 ================================
@@ -69,7 +77,7 @@ Se o usuário aprovar, aplique a refatoração automática seguindo o padrão MV
 2. **Transformações de Código:**
    - Elimine todos os anti-patterns identificados na Fase 2.
    - Converta consultas com concatenação de string para consultas parametrizadas (Prepared Statements) para eliminar SQL Injection.
-   - Refatore o algoritmo de hash de senha fraco (MD5 ou homegrown) para um hash seguro (ex: `hashlib.sha256` com salt ou módulo robusto equivalente no Node.js/Python).
+   - Refatore o algoritmo de hash de senha fraco (MD5 ou homegrown) para um hash seguro (ex: pbkdf2 com salt).
    - Elimine as queries N+1 reescrevendo-as com joins adequados ou carregamentos otimizados (Eager Loading).
    - Centralize o tratamento de erros HTTP em middlewares/decorators apropriados.
 3. **Validação e Boot:**

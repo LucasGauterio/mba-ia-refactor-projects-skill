@@ -17,4 +17,4 @@ CRITICAL: <Qtd> | HIGH: <Qtd> | MEDIUM: <Qtd> | LOW: <Qtd>
 
 ---
 
-*(Repetir a estrutura acima para todos os achados, ordenados de maior severidade para menor severidade)*
+*(Repetir a estrutura acima para todos os achados, ordenados de maior severidade para menor severidade: CRITICAL -> HIGH -> MEDIUM -> LOW)*

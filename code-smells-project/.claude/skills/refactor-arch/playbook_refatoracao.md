@@ -33,20 +33,15 @@ db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => { ... });
 def set_password(self, pwd):
     self.password = hashlib.md5(pwd.encode()).hexdigest()
 ```
-### Depois (Python SHA-256 com Salt robusto)
+### Depois (Python pbkdf2 com salt seguro)
 ```python
-import hashlib
-import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def set_password(self, pwd):
-    salt = os.urandom(16).hex()
-    hashed = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt.encode(), 100000).hex()
-    self.password = f"{salt}:{hashed}"
+    self.password = generate_password_hash(pwd)
 
 def check_password(self, pwd):
-    salt, hashed = self.password.split(':')
-    check = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt.encode(), 100000).hex()
-    return check == hashed
+    return check_password_hash(self.password, pwd)
 ```
 
 ### Antes (Node.js badCrypto)
@@ -105,7 +100,7 @@ const config = {
 
 ---
 
-## 4. Remoção de Endpoints de Backdoor Admin
+## 4. Remoção de Endpoints de Backdoor Admin / Falta de Autenticação
 
 ### Antes
 ```python
@@ -115,7 +110,7 @@ def executar_query():
     cursor.execute(query) # EXECUTA SQL LIVRE
 ```
 ### Depois
-- **Remover completamente** a rota ou substituí-la por logs de auditoria e rotas de administração estritamente tipadas e com middleware de autorização admin.
+- **Remover completamente** a rota `/admin/query`. Para rotas administrativas cruciais como `/admin/reset-db` e `/api/admin/financial-report`, implementar validação de tokens administrativos recebidos em headers (ex: `Authorization: Bearer <token>`).
 
 ---
 
@@ -165,7 +160,7 @@ let totalRevenue = 0;
 totalRevenue += payment.amount;
 ```
 ### Depois
-- Ler o estado calculando por meio de funções agregadoras diretamente do Banco de Dados no momento da requisição:
+- No Express/Node.js, migrar o banco em memória `:memory:` para arquivo persistente SQLite. Ler o faturamento calculando por meio de funções agregadoras diretamente do Banco de Dados no momento da requisição:
 ```javascript
 db.get("SELECT SUM(amount) AS total FROM payments WHERE status = 'PAID'", [], (err, row) => {
     const totalRevenue = row.total || 0;
@@ -182,7 +177,7 @@ app.delete('/api/users/:id', (req, res) => {
     db.run("DELETE FROM users WHERE id = ?", [id]); // Deixa enrollments órfãos
 });
 ```
-### Depois (Limpeza Manual no SQLite)
+### Depois (Limpeza Manual no SQLite com constraints ativas)
 ```javascript
 app.delete('/api/users/:id', (req, res) => {
     db.serialize(() => {
