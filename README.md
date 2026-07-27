@@ -230,7 +230,11 @@ Os problemas identificados nos códigos legados foram estruturados sob duas cate
 
 
 ### Como Garantimos que a Skill é Agnóstica
-*A ser preenchido durante a criação da skill.*
+A independência de tecnologia foi garantida por meio dos seguintes pilares no design da skill:
+- **Classificação Neutra e Heurísticas de Stack (Fase 1):** O arquivo `projeto_analise.md` instrui o agente a buscar arquivos de manifesto padrão (`package.json`, `requirements.txt`) e marcadores de código para determinar dinamicamente a linguagem/framework no início da execução, sem assumir a stack de antemão.
+- **Catálogo Baseado em Padrões Lógicos (Fase 2):** O arquivo `catalogo_antipatterns.md` foca na descrição teórica/lógica do problema (ex: concorrência de threads no SQLite, N+1 queries) fornecendo exemplos práticos em Python e JavaScript, permitindo a detecção universal.
+- **Playbook de Transformação Bilíngue (Fase 3):** O playbook `playbook_refatoracao.md` descreve as transformações sob a ótica de "Antes/Depois" para ambos os ecossistemas, fornecendo à IA a base sintática correspondente de acordo com a stack detectada na Fase 1. A validação de boot também adapta os comandos de execução ao ecossistema (`npm start` vs `python app.py`).
+
 
 ### Desafios Encontrados e Resoluções
 *A ser preenchido durante a criação da skill.*
