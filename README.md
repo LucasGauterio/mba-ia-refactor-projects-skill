@@ -163,7 +163,31 @@ Este repositório contém a implementação de uma Skill de IA para refatoraçã
 ## B) Construção da Skill
 
 ### Decisões de Design
-*A ser preenchido durante a criação da skill.*
+A skill `refactor-arch` foi estruturada para ser modular e flexível, utilizando o YAML frontmatter abaixo para auto-detecção e ativação na CLI:
+
+```yaml
+---
+name: refactor-arch
+description: >
+  Analisa de forma agnóstica de tecnologia, audita code smells e vulnerabilidades de arquitetura, 
+  gera relatórios de auditoria formatados por severidade e executa a refatoração automática de 
+  projetos de backend (ex: Python/Flask, Node.js/Express) para a arquitetura padrão MVC (Model-View-Controller), 
+  garantindo segurança, performance e validando o boot do sistema.
+triggers:
+  - /refactor-arch
+  - refactor-mvc
+  - refactor
+---
+```
+
+A estrutura conceitual da skill foi dividida nas seguintes preocupações:
+- **`SKILL.md` (Arquivo Mestre):** Coordena o fluxo sequencial das 3 fases (Análise, Auditoria e Refatoração).
+- **`projeto_analise.md`:** Contém heurísticas de mapeamento de stack e frameworks.
+- **`catalogo_antipatterns.md`:** Cataloga 10 falhas clássicas mapeadas para padrões C2 Wiki.
+- **`template_relatorio.md`:** Define a estrutura e severidades para o relatório da Fase 2.
+- **`guidelines_arquitetura.md`:** Define as responsabilidades lógicas e diretórios alvo para o MVC.
+- **`playbook_refatoracao.md`:** Contém receitas práticas de refatoração para cada falha detectada.
+
 
 ### Catálogo de Anti-patterns
 *A ser preenchido durante a criação da skill.*
