@@ -1,104 +1,72 @@
 # ARCHITECTURE AUDIT REPORT
 
 Project: code-smells-project
-Stack:   Python + Flask
-Files:   4 analyzed | ~800 lines of code
+Stack:   Python + Flask 3.1.1
+Files:   4 | ~784
 
 ## Summary
-CRITICAL: 4 | HIGH: 4 | MEDIUM: 2 | LOW: 2 | Total: 12 findings
+CRITICAL: 4 | HIGH: 2 | MEDIUM: 2 | LOW: 0 | Total: 8 findings
 
 ## Findings
 
-### [CRITICAL] Execução de SQL Arbitrário
-- **File:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L59-L79) (rota `/admin/query`)
-- **Description:** A rota `/admin/query` aceita strings SQL cruas no corpo da requisição e executa diretamente no banco de dados sem nenhuma autenticação ou validação prévia.
-- **Impact:** Comprometimento total do banco de dados (leitura, escrita, deleção) por qualquer cliente HTTP externo.
-- **Recommendation:** Remover completamente a rota ou substituí-la por uma interface administrativa autenticada e tipada.
+### [CRITICAL] Spaghetti Code / SQL Injection
+- **File:** [models.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py):28, 48-50, 58-60, 68, 92, 109-111, 126-129, 140, 148-151, 155, 157-161, 163-166, 174, 188, 192, 220, 224, 279-281, 289-298
+- **Description:** O projeto faz uso extensivo de consultas SQL puras construídas por meio de concatenação de strings com dados fornecidos pelo usuário. Por exemplo, na busca de produto por ID (`models.py:28`) e na validação de login (`models.py:109-111`), os parâmetros são injetados diretamente na query string.
+- **Impact:** Vulnerável a SQL Injection de forma crítica. Um atacante pode burlar a autenticação de login (ex: inserindo `' OR '1'='1`), extrair dados sigilosos ou modificar a base de dados.
+- **Recommendation:** Substituir todas as concatenações por Prepared Statements / consultas parametrizadas do SQLite, utilizando o caractere curinga `?` e passando os parâmetros como uma tupla/lista.
 
 ---
 
-### [CRITICAL] Reset de DB sem Autenticação
-- **File:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`)
-- **Description:** A rota `/admin/reset-db` limpa todas as tabelas do banco de dados sem verificar se o solicitante possui credenciais de administrador.
-- **Impact:** Perda total de dados de produção por meio de um simples clique ou chamada de script malicioso externa.
-- **Recommendation:** Exigir autenticação administrativa forte (JWT ou token estático no header) ou desativar em ambiente de produção.
+### [CRITICAL] Insecure Cryptography / Plain Text Passwords
+- **File:** [models.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py):109-111, 126-129 e [database.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py):75-83
+- **Description:** O sistema armazena as senhas dos usuários em texto limpo (plain text). Tanto na inserção inicial de usuários de teste (`database.py`) quanto na criação de novos usuários (`models.py:126-129`) e login (`models.py:109-111`), as senhas não passam por nenhum processo de hashing.
+- **Impact:** Se a base de dados SQLite (`loja.db`) for vazada ou acessada indevidamente, todas as credenciais de clientes e administradores serão expostas imediatamente.
+- **Recommendation:** Refatorar o fluxo para criptografar as senhas usando algoritmos robustos e modernos de hash como PBKDF2 com Salt. Sugere-se utilizar `werkzeug.security.generate_password_hash` e `check_password_hash`, que já estão disponíveis no Flask/Werkzeug.
 
 ---
 
-### [CRITICAL] Queries por Concatenação de Strings (SQL Injection)
-- **File:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L28) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L47-L50)
-- **Description:** Consultas SQL criadas concatenando variáveis de input do usuário diretamente na string SQL (ex: `"SELECT * FROM produtos WHERE id = " + str(id)`).
-- **Impact:** Vulnerabilidade de SQL Injection geral que permite vazamento de dados privados ou bypass de validações de login.
-- **Recommendation:** Utilizar Prepared Statements com placeholders de interrogação `?` nas queries SQL.
+### [CRITICAL] Auth Illusion / SQL Backdoor
+- **File:** [app.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py):59-79
+- **Description:** A rota `/admin/query` permite que qualquer requisição HTTP POST execute comandos SQL arbitrários no banco de dados sem nenhuma validação, sanitização ou autenticação de token/sessão.
+- **Impact:** Isso funciona como um backdoor administrativo completo exposto publicamente na internet. Qualquer pessoa pode apagar tabelas (`DROP TABLE`), extrair dados de usuários ou injetar registros arbitrários.
+- **Recommendation:** Remover completamente a rota `/admin/query` da aplicação, pois ela viola os princípios fundamentais de segurança de software.
 
 ---
 
-### [CRITICAL] Senhas em Texto Puro e Exposição na API
-- **File:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L76-L79) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L83)
-- **Description:** Senhas de usuários e do administrador gravadas como texto plano (sem hash) nas sementes do banco e expostas no dicionário JSON de retorno da API de listagem de usuários.
-- **Impact:** Exposição grave de credenciais de usuários e administradores em caso de leitura física da base ou interceptação de rede.
-- **Recommendation:** Armazenar hashes seguros de senha usando salting individual (ex: via pbkdf2 no Werkzeug) e omitir as senhas nas serializações de saída.
+### [CRITICAL] Hardcoded Secrets & Info Leakage
+- **File:** [app.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py):7 e [controllers.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py):289
+- **Description:** A chave de criptografia do Flask (`SECRET_KEY`) está chumbada no código-fonte como `"minha-chave-super-secreta-123"`. Adicionalmente, no endpoint `/health` (`controllers.py:289`), essa chave secreta e o estado de debug são explicitamente retornados no payload JSON de resposta HTTP.
+- **Impact:** Com a `SECRET_KEY` exposta publicamente via código ou pelo endpoint `/health`, um atacante pode forjar cookies de sessão do Flask, permitindo Personificação de Usuário e controle da aplicação.
+- **Recommendation:** Carregar a `SECRET_KEY` a partir de variáveis de ambiente (`os.getenv("SECRET_KEY")`) e remover a chave secreta e informações internas de depuração do retorno JSON do endpoint `/health`.
 
 ---
 
-### [HIGH] SECRET_KEY e DEBUG=True Hardcoded
-- **File:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L7-L8)
-- **Description:** Chave secreta de sessões (`SECRET_KEY`) e modo de depuração (`DEBUG`) chumbados no código do servidor Flask.
-- **Impact:** Facilita ataques de falsificação de sessão e ativa o debugger interativo em produção em caso de exceções não tratadas, abrindo brecha de execução remota de código (RCE).
-- **Recommendation:** Carregar valores de configurações dinamicamente via variáveis de ambiente com `os.getenv`.
+### [HIGH] The Blob / God Class
+- **File:** [app.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py):47-79
+- **Description:** O arquivo `app.py` age como "God Class", concentrando a configuração de roteamento geral da API, inicialização de conexões e execução direta de comandos SQL administrativos e de backdoor (`/admin/reset-db` e `/admin/query`). Isso quebra a separação de responsabilidades.
+- **Impact:** Acoplamento excessivo que impede testes unitários e dificulta a evolução de regras de autenticação/autorização de rotas administrativas.
+- **Recommendation:** Segregar a lógica das rotas em controllers apropriados e views/routes organizadas. Centralizar o bootstrap e composition root em `app.py` apenas delegando para as camadas inferiores.
 
 ---
 
-### [HIGH] Rota de Healthcheck Expõe Segredos
-- **File:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L289-L290)
-- **Description:** Rota `/health` retorna a chave secreta criptográfica do app e o caminho absoluto do banco de dados no JSON de resposta.
-- **Impact:** Vazamento direto de segredos de infraestrutura e criptografia para qualquer usuário externo.
-- **Recommendation:** Omitir chaves e caminhos locais da resposta HTTP.
+### [HIGH] Query N+1 Performance Bottleneck
+- **File:** [models.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py):171-201 e 203-233
+- **Description:** As funções `get_pedidos_usuario` e `get_todos_pedidos` realizam consultas em laço (loops). Primeiro busca os pedidos; para cada pedido, faz uma consulta na tabela `itens_pedido`; e para cada item do pedido, faz outra consulta na tabela `produtos` para obter o nome do produto.
+- **Impact:** Se houver 100 pedidos com média de 3 itens cada, a API executará 1 + 100 + 300 = 401 queries separadas no banco de dados. Isso causa lentidão extrema e sobrecarga de I/O do banco à medida que o histórico de vendas cresce.
+- **Recommendation:** Reescrever a busca usando cláusulas `JOIN` do SQL para trazer todos os pedidos, itens e nomes dos produtos em uma única consulta otimizada, e estruturar o agrupamento no código Python.
 
 ---
 
-### [HIGH] Conexão SQLite Global Compartilhada
-- **File:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L10)
-- **Description:** Uso da propriedade `check_same_thread=False` para compartilhar uma conexão global única entre requisições simultâneas em threads separadas do Flask.
-- **Impact:** Riscos graves de concorrência, travamento de escrita e corrupção física do arquivo `.db`.
-- **Recommendation:** Instanciar conexões SQLite seguras e fechá-las ao final do contexto de cada requisição HTTP (utilizando `flask.g`).
+### [MEDIUM] Cover Your Assets / Generic Exception Swallowing
+- **File:** [controllers.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py):5-13, 14-22, 24-63, etc.
+- **Description:** Praticamente todas as funções de controle usam blocos genéricos `try-except Exception as e` para capturar qualquer exceção e retornar a mensagem interna do erro diretamente no JSON de erro para o cliente (`return jsonify({"erro": str(e)}), 500`).
+- **Impact:** Silencia logs estruturados internos do servidor e vaza detalhes estruturais do banco de dados (ex: erros de sintaxe SQL, nomes de colunas) para o cliente externo, facilitando ataques dirigidos.
+- **Recommendation:** Implementar um middleware / decorador de tratamento de exceções global no Flask (`@app.errorhandler(Exception)`) para interceptar erros inesperados de forma genérica, logar o erro internamente com stack trace completo, e responder ao cliente com uma mensagem de erro genérica padrão e segura.
 
 ---
 
-### [HIGH] Fluxo de Pedido sem Rollback Transacional
-- **File:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L133-L169)
-- **Description:** A criação do pedido executa inserções no pedido, nos itens e updates no estoque do produto sequencialmente sem iniciar uma transação no banco.
-- **Impact:** Em caso de exceção no meio do processo, o banco ficará em estado inconsistente (ex: estoque decrementado mas item não registrado).
-- **Recommendation:** Agrupar todas as operações de escrita em uma transação com commit final e rollback em caso de falha.
-
----
-
-### [MEDIUM] Mistura de Responsabilidades nos Controllers
-- **File:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py)
-- **Description:** Métodos do controller controlam roteamento HTTP, validações de payload e lógicas de queries de domínio.
-- **Impact:** Alto acúmulo de débito técnico e impossibilidade de criar testes unitários.
-- **Recommendation:** Separar em controllers puros que delegam lógica a models ou classes de serviço correspondentes.
-
----
-
-### [MEDIUM] Gargalo N+1 nas Consultas de Pedidos
-- **File:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L171-L233)
-- **Description:** Busca de dados de relacionamento (`itens_pedido` e `produtos`) executada individualmente dentro de loops para cada pedido listado.
-- **Impact:** Atraso e sobrecarga de acessos ao banco de dados com a escala de pedidos no e-commerce.
-- **Recommendation:** Reescrever a consulta usando um `LEFT JOIN` unificado e mapear a árvore no Python.
-
----
-
-### [MEDIUM] Schema sem Constraints Relacionais
-- **File:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L37-L53)
-- **Description:** Tabelas do banco de dados criadas sem declarações de chaves estrangeiras explícitas e restrições integras.
-- **Impact:** Facilita inserção de dados inconsistentes e a criação de registros filhos órfãos.
-- **Recommendation:** Ativar suporte a Foreign Keys no SQLite (`PRAGMA foreign_keys = ON`) e declarar as constraints de chave no schema SQL.
-
----
-
-### [LOW] Constantes de Domínio Repetidas Inline
-- **File:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L52)
-- **Description:** Lista de categorias válidas chumbada diretamente na validação do controller como literal.
-- **Impact:** A manutenção exige modificar múltiplos arquivos caso o catálogo mude.
-- **Recommendation:** Concentrar em constantes centralizadas na configuração ou no modelo de domínio.
+### [MEDIUM] Referential Integrity Failure / Cascade Delete Failure
+- **File:** [database.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py):46-53 e [models.py](file:///G:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py):65-70
+- **Description:** A tabela `itens_pedido` é relacionada aos pedidos e produtos por chaves lógicas, mas não declara restrições explícitas de chaves estrangeiras com `ON DELETE CASCADE`. Além disso, a remoção de produtos (`deletar_produto`) é executada por um `DELETE` direto, mantendo linhas órfãs em `itens_pedido`.
+- **Impact:** Inconsistência relacional no banco de dados e acúmulo de dados lixo e registros órfãos que quebram relatórios futuros.
+- **Recommendation:** Declarar explicitamente as chaves estrangeiras (`FOREIGN KEY`) com `ON DELETE CASCADE` na criação das tabelas e garantir que o SQLite execute com constraints habilitadas (`PRAGMA foreign_keys = ON;`).
