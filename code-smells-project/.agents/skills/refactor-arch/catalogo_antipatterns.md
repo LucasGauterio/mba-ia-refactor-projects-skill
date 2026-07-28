@@ -48,3 +48,12 @@ Os problemas identificados nos códigos legados estão estruturados sob duas cat
 ### 10. Accidental Complexity / Startup Side-Effects (Severidade: HIGH)
 - **Sinais:** Chamada estrutural de `db.create_all()` no startup de requisições de API.
 - **Impacto:** Lentidão no boot do servidor e risco operacional de alteração estrutural inesperada.
+
+### 11. SQLite Thread-Unsafe / Global Connection Sharing (Severidade: HIGH)
+- **Sinais:** Compartilhamento de conexão SQLite global única entre requisições em diferentes threads (`check_same_thread=False`) ou uso de variáveis globais de conexão compartilhadas sem escopo local.
+- **Impacto:** Risco de concorrência instável, erros de locks e potencial corrupção física do banco de dados SQLite.
+
+### 12. Non-Atomic Multi-write Flows / Transaction Violation (Severidade: HIGH)
+- **Sinais:** Processamento de múltiplos statements sequenciais de escrita (inserts/updates/deletes) que dependem uns dos outros para integridade (ex: checkout de pagamentos, criação de pedidos e decremento de estoque) sem iniciar e encerrar transações de banco atômicas.
+- **Impacto:** Dados órfãos ou inconsistências graves em caso de interrupção ou falhas a meio caminho da transação.
+

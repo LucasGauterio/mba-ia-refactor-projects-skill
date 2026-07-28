@@ -210,3 +210,79 @@ def handle_exception(e):
     print(f"Erro inesperado: {str(e)}")
     return jsonify({"erro": "Ocorreu um erro interno no servidor"}), 500
 ```
+
+---
+
+## 9. SQLite Thread-Safe Connection (Isolamento por Request Context)
+
+### Antes (Python - Conexão Global Única)
+```python
+conn = sqlite3.connect("database.db", check_same_thread=False) # Inseguro
+```
+### Depois (Python - Usando `flask.g` para obter uma conexão por requisição)
+```python
+from flask import g
+import sqlite3
+
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect("database.db")
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+def close_db(e=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+```
+
+---
+
+## 10. Atomicidade de Transações (Rollback e Atômico)
+
+### Antes (Python - Múltiplas inserções sem transação)
+```python
+cursor.execute("INSERT INTO pedidos ...")
+cursor.execute("UPDATE estoque ...") # Se falhar aqui, o insert acima persiste erroneamente!
+conn.commit()
+```
+### Depois (Python - Transação segura)
+```python
+conn = get_db()
+cursor = conn.cursor()
+try:
+    cursor.execute("BEGIN TRANSACTION;")
+    cursor.execute("INSERT INTO pedidos ...")
+    cursor.execute("UPDATE estoque ...")
+    conn.commit()
+except Exception as e:
+    conn.rollback() # Restaura o estado anterior do banco em caso de erros
+    raise e
+```
+
+### Antes (Node.js - Múltiplas inserções assíncronas soltas)
+```javascript
+db.run("INSERT INTO enrollments ...", (err) => {
+    db.run("INSERT INTO payments ...", (err) => { ... });
+});
+```
+### Depois (Node.js - Transação sequencial serializada)
+```javascript
+db.serialize(() => {
+    db.run("BEGIN TRANSACTION");
+    db.run("INSERT INTO enrollments ...", function(err) {
+        if (err) {
+            db.run("ROLLBACK");
+            return;
+        }
+        db.run("INSERT INTO payments ...", function(err) {
+            if (err) {
+                db.run("ROLLBACK");
+                return;
+            }
+            db.run("COMMIT");
+        });
+    });
+});
+```
+
