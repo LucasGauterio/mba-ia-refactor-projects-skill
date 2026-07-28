@@ -250,7 +250,7 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 ### Resumo dos Relatórios de Auditoria
 | Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|---|
-| `code-smells-project` | - | - | - | - | - |
+| `code-smells-project` | 4 | 2 | 2 | 0 | 8 |
 | `ecommerce-api-legacy` | - | - | - | - | - |
 | `task-manager-api` | - | - | - | - | - |
 
@@ -259,11 +259,40 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 #### `code-smells-project`
 ```
 Antes:
-(estrutura original)
+.
+├── app.py
+├── controllers.py
+├── database.py
+├── models.py
+└── requirements.txt
 
 Depois:
-(estrutura refatorada)
+.
+├── .env.example
+├── app.py
+├── requirements.txt
+├── README.md
+└── src/
+    ├── app.py
+    ├── config/
+    │   ├── database.py
+    │   └── settings.py
+    ├── controllers/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    ├── middlewares/
+    │   └── error_handler.py
+    ├── models/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    └── views/
+        └── routes.py
 ```
+
 
 #### `ecommerce-api-legacy`
 ```
@@ -286,25 +315,26 @@ Depois:
 ### Checklist de Validação
 
 #### Projeto 1: `code-smells-project`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
+
 
 #### Projeto 2: `ecommerce-api-legacy`
 - [ ] Fase 1: Linguagem detectada corretamente
@@ -347,3 +377,64 @@ Depois:
 - [ ] Fase 3: Entry point claro
 - [ ] Fase 3: Aplicação inicia sem erros
 - [ ] Fase 3: Endpoints originais respondem corretamente
+
+### Logs e Demonstrações de Funcionamento
+
+#### Projeto 1: `code-smells-project`
+A execução da Fase 3 gerou o seguinte resumo no terminal do usuário:
+```
+================================
+PHASE 3: REFACTORING COMPLETE
+================================
+## New Project Structure
+.
+├── .env.example
+├── app.py
+├── requirements.txt
+├── README.md
+└── src/
+    ├── app.py
+    ├── config/
+    │   ├── database.py
+    │   └── settings.py
+    ├── controllers/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    ├── middlewares/
+    │   └── error_handler.py
+    ├── models/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    └── views/
+        └── routes.py
+
+## Validation
+  ✓ Application boots without errors
+  ✓ All endpoints respond correctly
+  ✓ Zero anti-patterns remaining
+================================
+```
+
+---
+
+## D) Como Executar
+
+### Pré-requisitos
+- **Antigravity CLI (`agy`):** A ferramenta CLI do Gemini configurada localmente.
+- **Node.js:** Versão 18+ instalada.
+- **Python:** Versão 3.10+ instalada.
+
+### Comandos de Invocação da Skill
+Para rodar a skill de refatoração arquitetural MVC em cada projeto, entre no diretório correspondente e execute:
+
+```bash
+# Projeto 1 — code-smells-project
+cd code-smells-project
+agy "/refactor-arch"
+```
+*(Os comandos para os demais projetos serão adicionados após a execução e validação de cada um).*
+
