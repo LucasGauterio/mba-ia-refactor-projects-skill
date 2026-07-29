@@ -134,15 +134,17 @@ Os problemas identificados nos códigos legados foram estruturados sob duas cate
 A independência de tecnologia foi garantida por meio dos seguintes pilares no design da skill:
 - **Classificação Neutra e Heurísticas de Stack (Fase 1):** O arquivo `projeto_analise.md` instrui o agente a buscar arquivos de manifesto padrão (`package.json`, `requirements.txt`) e marcadores de código para determinar dinamicamente a linguagem/framework no início da execução, sem assumir a stack de antemão.
 - **Catálogo Baseado em Padrões Lógicos (Fase 2):** O arquivo `catalogo_antipatterns.md` foca na descrição teórica/lógica do problema (ex: concorrência de threads no SQLite, N+1 queries) fornecendo exemplos práticos em Python e JavaScript, permitindo a detecção universal.
-- **Playbook de Transformação Bilíngue (Fase 3):** O playbook `playbook_refatoracao.md` descreve as transformações sob a ótica de "Antes/Depois" para ambos os ecossistemas, fornecendo à IA a base sintática correspondente de acordo com a stack detectada na Fase 1. A validação de boot também adapta os comandos de execução ao ecossistema (`npm start` vs `python app.py`).
-
-
-### Desafios Encontrados e Resoluções
+- **Playbook de Transformação Bilíngue (Fase 3):** O playbook `playbook_ref### Desafios Encontrados e Resoluções
 - **Desafio 1: Suporte a Múltiplas Tecnologias (Agnosticismo):** Instruir a IA a refatorar em linguagens diferentes sem cruzar sintaxes. *Resolução:* Criamos um playbook "bilíngue" com receitas de "Antes/Depois" isoladas para Python e Node.js.
 - **Desafio 2: Projetos com Estruturas Iniciais Diferentes:** Evitar reestruturações redundantes ou deletar arquivos errados em pastas pré-existentes. *Resolução:* Implementamos heurísticas que avaliam o layout inicial de diretórios e adaptam as tarefas de reestruturação da Fase 3.
 - **Desafio 3: Validação Dinâmica de Funcionamento (Boot/Endpoints):** Automatizar checagens genéricas de boot e conectividade em portas e ecossistemas distintos. *Resolução:* O agente inspeciona arquivos manifestos para orquestrar comandos dinâmicos (npm start vs python app.py) e executa testes via curl.
 - **Desafio 4: Evitar Sobrecarga de Contexto do Prompt:** Impedir perda de foco ou alucinações no `SKILL.md` por excesso de regras. *Resolução:* Dividimos a skill em 5 sub-arquivos Markdown lidos sob demanda de referência.
 
+### Decisão de Projeto: Restrição de Escopo via Workspace Rules (`.agents/rules`)
+Durante as primeiras execuções manuais do CLI `agy`, identificou-se um vazamento de escopo (*context leak*): ao ser invocado dentro de uma pasta específica (como `ecommerce-api-legacy/`), o agente realizava varreduras e leituras exploratórias de arquivos (`Get-ChildItem` e `ListDir`) na raiz do repositório e em pastas de outros projetos.
+- **Causa:** O CLI detecta o workspace buscando a pasta `.git` mais próxima na árvore, o que definia todo o repositório como o workspace da sessão do agente.
+- **Solução Implementada:** Criamos uma regra de workspace "Always On" localizada em [.agents/rules/restricao_escopo.md](file:///g:/Projects/mba-ia-refactor-projects-skill/.agents/rules/restricao_escopo.md).
+- **Funcionamento:** O motor do Antigravity lê e carrega este arquivo de regras imediatamente ao iniciar qualquer sessão da CLI neste repositório. A regra instrui cognitivamente o agente a conter suas operações de descoberta e ferramentas de sistema estritamente no subdiretório local do projeto ativo onde a invocação ocorreu, garantindo segurança e aderência ao escopo correto do projeto.
 
 ---
 
@@ -151,8 +153,8 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 ### Resumo dos Relatórios de Auditoria
 | Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|---|
-| `code-smells-project` | - | - | - | - | - |
-| `ecommerce-api-legacy` | - | - | - | - | - |
+| `code-smells-project` | 4 | 3 | 1 | 2 | 10 |
+| `ecommerce-api-legacy` | 3 | 3 | 1 | 2 | 9 |
 | `task-manager-api` | - | - | - | - | - |
 
 ### Comparação Antes/Depois da Estrutura
@@ -160,20 +162,91 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 #### `code-smells-project`
 ```
 Antes:
-(estrutura original)
+.
+├── app.py
+├── controllers.py
+├── database.py
+├── models.py
+└── requirements.txt
 
 Depois:
-(estrutura refatorada)
+.
+├── .env
+├── .env.example
+├── app.py (MVC Compatibility Wrapper)
+├── requirements.txt
+└── src/
+    ├── __init__.py
+    ├── app.py (Composition Root Entrypoint)
+    ├── config/
+    │   ├── __init__.py
+    │   ├── database.py
+    │   └── settings.py
+    ├── controllers/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    ├── middlewares/
+    │   ├── __init__.py
+    │   └── error_handler.py
+    ├── models/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    └── routes/
+        ├── __init__.py
+        ├── general.py
+        ├── pedido.py
+        ├── produto.py
+        └── usuario.py
 ```
 
 
 #### `ecommerce-api-legacy`
 ```
 Antes:
-(estrutura original)
+.
+├── api.http
+├── lms.db
+├── package-lock.json
+├── package.json
+└── src/
+    ├── AppManager.js
+    ├── app.js
+    └── utils.js
 
 Depois:
-(estrutura refatorada)
+.
+├── .env
+├── .env.example
+├── api.http
+├── lms.db
+├── package-lock.json
+├── package.json
+└── src/
+    ├── app.js
+    ├── config/
+    │   ├── constants.js
+    │   ├── database.js
+    │   ├── env.js
+    │   └── security.js
+    ├── controllers/
+    │   ├── AdminController.js
+    │   ├── CheckoutController.js
+    │   └── UserController.js
+    ├── middlewares/
+    │   └── errorHandler.js
+    ├── models/
+    │   ├── AuditLogModel.js
+    │   ├── CourseModel.js
+    │   ├── EnrollmentModel.js
+    │   ├── PaymentModel.js
+    │   ├── ReportModel.js
+    │   └── UserModel.js
+    └── routes/
+        └── api.js
 ```
 
 #### `task-manager-api`
@@ -188,48 +261,46 @@ Depois:
 ### Checklist de Validação
 
 #### Projeto 1: `code-smells-project`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
-
-
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
 
 #### Projeto 2: `ecommerce-api-legacy`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
 
 #### Projeto 3: `task-manager-api`
 - [ ] Fase 1: Linguagem detectada corretamente
@@ -254,8 +325,6 @@ Depois:
 
 ### Logs e Demonstrações de Funcionamento
 
-
-
 ---
 
 ## D) Como Executar
@@ -274,4 +343,5 @@ cd code-smells-project
 agy --prompt-interactive "/refactor-arch"
 ```
 *(Os comandos para os demais projetos serão adicionados após a execução e validação de cada um).*
+
 
