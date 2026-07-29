@@ -308,7 +308,9 @@ Para rodar a skill de refatoração arquitetural MVC em cada projeto, entre no d
 ```bash
 # Projeto 1 — code-smells-project
 cd code-smells-project
-agy "/refactor-arch"
+agy
+#digite após CLI abrir
+/refactor-arch
 ```
 *(Os comandos para os demais projetos serão adicionados após a execução e validação de cada um).*
 
