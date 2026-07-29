@@ -254,44 +254,7 @@ Depois:
 
 ### Logs e Demonstrações de Funcionamento
 
-#### Projeto 1: `code-smells-project`
-A execução da Fase 3 gerou o seguinte resumo no terminal do usuário:
-```
-================================
-PHASE 3: REFACTORING COMPLETE
-================================
-## New Project Structure
-.
-├── .env.example
-├── app.py
-├── requirements.txt
-├── README.md
-└── src/
-    ├── app.py
-    ├── config/
-    │   ├── database.py
-    │   └── settings.py
-    ├── controllers/
-    │   ├── __init__.py
-    │   ├── pedido.py
-    │   ├── produto.py
-    │   └── usuario.py
-    ├── middlewares/
-    │   └── error_handler.py
-    ├── models/
-    │   ├── __init__.py
-    │   ├── pedido.py
-    │   ├── produto.py
-    │   └── usuario.py
-    └── views/
-        └── routes.py
 
-## Validation
-  ✓ Application boots without errors
-  ✓ All endpoints respond correctly
-  ✓ Zero anti-patterns remaining
-================================
-```
 
 ---
 
@@ -308,9 +271,7 @@ Para rodar a skill de refatoração arquitetural MVC em cada projeto, entre no d
 ```bash
 # Projeto 1 — code-smells-project
 cd code-smells-project
-agy
-#digite após CLI abrir
-/refactor-arch
+agy --prompt-interactive "/refactor-arch"
 ```
 *(Os comandos para os demais projetos serão adicionados após a execução e validação de cada um).*
 
