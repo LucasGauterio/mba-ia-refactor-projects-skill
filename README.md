@@ -6,157 +6,58 @@ Este repositório contém a implementação de uma Skill de IA para refatoraçã
 
 ### 1. Projeto `code-smells-project` (Python/Flask)
 
-1. **CRITICAL: Execução de SQL Arbitrário**
-   - **Arquivo/Linhas:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L59-L79) (rota `/admin/query`)
-   - **Justificativa:** Comprometimento direto do banco de dados por requisições HTTP normais de qualquer cliente.
-   
-2. **CRITICAL: Reset de DB sem Autenticação**
-   - **Arquivo/Linhas:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`)
-   - **Justificativa:** Perda total de dados com uma única chamada HTTP GET/POST, sem qualquer validação de segurança.
-
-3. **CRITICAL: Queries por Concatenação de Strings**
-   - **Arquivo/Linhas:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L28) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L47-L50)
-   - **Justificativa:** Múltiplos pontos de SQL Injection direta que permitem leitura e deleção não autorizada de dados.
-
-4. **CRITICAL: Senhas em Texto Puro e Exposição na API**
-   - **Arquivo/Linhas:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L76-L79) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L83)
-   - **Justificativa:** Armazenamento de senhas sem hash e devolução do campo de senha diretamente na resposta JSON da API.
-
-5. **HIGH: SECRET_KEY e DEBUG=True Hardcoded**
-   - **Arquivo/Linhas:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L7-L8)
-   - **Justificativa:** Acoplamento inseguro do segredo criptográfico ao código e riscos de execução no modo de depuração em produção.
-
-6. **HIGH: Rota de Healthcheck Expõe Segredos**
-   - **Arquivo/Linhas:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L289-L290)
-   - **Justificativa:** Vazamento desnecessário do caminho do banco e da `SECRET_KEY` no payload JSON de `/health`.
-
-7. **HIGH: Conexão SQLite Global Compartilhada**
-   - **Arquivo/Linhas:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L10)
-   - **Justificativa:** Concorrência frágil em requisições assíncronas do Flask, gerando erros e dificultando testes isolados.
-
-8. **HIGH: Fluxo de Pedido sem Rollback Transacional**
-   - **Arquivo/Linhas:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L133-L169)
-   - **Justificativa:** Sem controle de transação (commit intermediário e sem rollback). Em caso de falha a meio, o estoque e os pedidos podem ficar inconsistentes.
-
-9. **MEDIUM: Mistura de Responsabilidades nos Controllers**
-   - **Arquivo/Linhas:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py)
-   - **Justificativa:** Controllers misturam regras de roteamento HTTP, validações de payload e lógicas complexas de negócio.
-
-10. **MEDIUM: Gargalo N+1 nas Consultas de Pedidos**
-    - **Arquivo/Linhas:** [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L171-L233)
-    - **Justificativa:** Execução de múltiplas sub-queries no banco de dados para buscar itens e produtos de cada pedido em um loop.
-
-11. **MEDIUM: Schema sem Constraints Relacionais**
-    - **Arquivo/Linhas:** [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L37-L53)
-    - **Justificativa:** Tabelas criadas sem Foreign Keys (FKs) ativas e restrições integras, facilitando a existência de registros órfãos.
-
-12. **LOW: Constantes de Domínio Repetidas Inline**
-    - **Arquivo/Linhas:** [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L52)
-    - **Justificativa:** Categorias válidas repetidas como literais de string em múltiplos trechos de validação.
+| ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
+| :-: | :--- | :--- | :--- | :--- |
+| 1 | **Execução de SQL Arbitrário** | CRITICAL | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L59-L79) (rota `/admin/query`) | A rota `/admin/query` aceita SQL livre enviado pelo cliente e o executa. Permite comprometimento total e direto do banco via HTTP. |
+| 2 | **Reset de DB sem Autenticação** | CRITICAL | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`) | A rota `/admin/reset-db` limpa todas as tabelas sem nenhuma autenticação, gerando perda total de dados com uma única chamada externa. |
+| 3 | **SQL Injection por Concatenação** | CRITICAL | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L28) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L47-L50) | Consultas SQL montadas concatenando strings diretamente com inputs de requisição de usuário, abrindo múltiplas falhas graves de SQL Injection. |
+| 4 | **Senhas em Texto Puro / Exposição** | CRITICAL | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L76-L79) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L83) | Senhas salvas sem hashing no banco e retornadas diretamente em texto limpo no payload JSON de APIs públicas. |
+| 5 | **SECRET_KEY e DEBUG Hardcoded** | HIGH | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L7-L8) | Chaves criptográficas do app salvas no código-fonte e modo debug ativo, facilitando falsificação de sessões e execução remota de código. |
+| 6 | **Healthcheck com Vazamento** | HIGH | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L289-L290) | Endpoint `/health` expõe explicitamente a `SECRET_KEY` e caminhos físicos do sistema no payload. |
+| 7 | **Conexão SQLite Global** | HIGH | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L10) | Compartilhamento global de conexão SQLite entre threads paralelas do Flask com `check_same_thread=False`, gerando instabilidade de concorrência. |
+| 8 | **Pedidos sem Rollback Transacional** | HIGH | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L133-L169) | Ações sequenciais de criação de pedidos e decremento de estoque sem transação lógica; falhas deixam o banco inconsistente. |
+| 9 | **Acoplamento nos Controllers** | MEDIUM | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py) | Mistura de controle HTTP, parsing, validação básica e lógicas de queries diretamente dentro de arquivos de controle. |
+| 10 | **Gargalo N+1 em Pedidos** | MEDIUM | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L171-L233) | Consultas sequenciais a produtos e itens rodadas em laço para cada pedido, aumentando a latência com o volume de dados. |
+| 11 | **Schema sem Constraints** | MEDIUM | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L37-L53) | Tabelas criadas sem Foreign Keys e constraints de unicidade (`UNIQUE`), facilitando chaves órfãs e inconsistências relacionais. |
+| 12 | **Constantes de Domínio Inline** | LOW | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L52) | Strings de categorias de produtos válidas escritas inline como strings literais de validação repetidas em vários arquivos. |
 
 ---
 
 ### 2. Projeto `ecommerce-api-legacy` (Node.js/Express)
 
-1. **CRITICAL: Segredos Hardcoded no Código**
-   - **Arquivo/Linhas:** [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L1-L7)
-   - **Justificativa:** Exposição de chaves privadas do gateway de pagamento, credenciais do SMTP e senhas de banco no código-fonte.
-
-2. **CRITICAL: Log de Dados Sensíveis de Pagamento**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L45)
-   - **Justificativa:** Chave do gateway e o número do cartão de crédito são printados no console no momento do checkout, expondo dados financeiros.
-
-3. **CRITICAL: Senha de Seed em Texto Puro**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L18)
-   - **Justificativa:** Inserção inicial do usuário 'Leonan' com a senha literal '123' sem hashing no banco de dados.
-
-4. **CRITICAL: Algoritmo badCrypto Fraco e Determinístico**
-   - **Arquivo/Linhas:** [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L17-L23)
-   - **Justificativa:** Algoritmo customizado de hash baseado em base64 repetido que gera colisões e não possui salt ou fator de trabalho.
-
-5. **HIGH: Rota do Relatório Financeiro Pública**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L80)
-   - **Justificativa:** Rota `/api/admin/financial-report` expõe faturamento total e dados de alunos sem nenhuma autenticação admin.
-
-6. **HIGH: Checkout sem Transação de Banco**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L50-L63)
-   - **Justificativa:** Inserção de matrícula e pagamento ocorrem em statements separados assíncronos. Falhas deixam matrículas criadas sem registro de pagamento.
-
-7. **HIGH: Schema sem Constraints e UNIQUE**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L12-L16)
-   - **Justificativa:** Ausência de `UNIQUE(email)` em users e ausência de restrições relacionais explícitas nas tabelas de junção.
-
-8. **HIGH: Deleção Limpa Usuário mas deixa Órfãos**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L131-L137)
-   - **Justificativa:** Rota DELETE `/api/users/:id` apaga o usuário mas mantém matrículas e pagamentos órfãos apontando para IDs inexistentes.
-
-9. **MEDIUM: Payload com Nomes Opacos**
-   - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L29-L33)
-   - **Justificativa:** Propriedades de requisição curtas e obscuras (`usr`, `eml`, `pwd`, `c_id`, `card`) dificultando integração e clareza do contrato.
-
-10. **MEDIUM: Senha Padrão Fraca e Previsível**
-    - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L68)
-    - **Justificativa:** Atribuição da senha padrão literal `'123456'` caso o parâmetro de senha (`pwd`) esteja ausente no checkout.
-
-11. **MEDIUM: Gargalo N+1 no Relatório Financeiro**
-    - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L89-L127)
-    - **Justificativa:** Nested queries executadas em loops assíncronos para cada curso e para cada matrícula, sobrecarregando o banco de dados.
-
-12. **MEDIUM: Banco em Memória de Curta Duração**
-    - **Arquivo/Linhas:** [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L7)
-    - **Justificativa:** Banco SQLite inicializado em `:memory:`, fazendo com que todas as matrículas, usuários e pagamentos se percam ao reiniciar a app.
+| ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
+| :-: | :--- | :--- | :--- | :--- |
+| 1 | **Segredos Hardcoded no Código** | CRITICAL | [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L1-L7) | Chaves privadas do gateway de pagamento, SMTP e dados de banco salvos de forma estática no código-fonte. |
+| 2 | **Vazamento de Cartão nos Logs** | CRITICAL | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L45) | Console logs exibem abertamente chaves privadas e o número de cartão de crédito no momento do checkout. |
+| 3 | **Senha do Seed em Texto Puro** | CRITICAL | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L18) | Usuário seed inicial inserido com a senha literal plaintext `'123'` sem passar por nenhum algoritmo de hash. |
+| 4 | **Hashing badCrypto Fraco e Previsível** | CRITICAL | [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L17-L23) | Algoritmo de hash customizado usando conversões simples e previsíveis em base64, vulnerável a colisões e sem salting. |
+| 5 | **Relatório Financeiro Público** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L80) | Rota administrativa `/api/admin/financial-report` expõe faturamento e dados de alunos de forma pública, sem token. |
+| 6 | **Checkout sem Transação de Banco** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L50-L63) | Matrícula e pagamentos gravados de forma assíncrona desacoplada; falhas criam matrículas válidas sem nenhum pagamento. |
+| 7 | **Schema sem UNIQUE / FKs** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L12-L16) | Falta de constraint `UNIQUE(email)` em users e de foreign keys nas tabelas associativas do SQLite. |
+| 8 | **Cascading Delete Ausente** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L131-L137) | Deleção de usuário remove o registro pai do banco mas deixa matrículas e pagamentos órfãos apontando para IDs nulos. |
+| 9 | **Payload com Nomes Opacos** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L29-L33) | Parâmetros de requisição curtos e opacos (`usr`, `eml`, `pwd`, `card`) que dificultam leitura e integrações limpas de contratos. |
+| 10 | **Senha Fallback Fraca** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L68) | Atribuição da senha padrão fraca `'123456'` caso o parâmetro `pwd` seja omitido no checkout. |
+| 11 | **Gargalo N+1 no Relatório** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L89-L127) | Laços assíncronos que executam queries extras de matrículas e pagamentos para cada curso listado. |
+| 12 | **Banco SQLite em Memória** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L7) | Conexão inicializada em `:memory:`, provocando perda total de usuários e vendas em caso de qualquer reboot da aplicação. |
 
 ---
 
 ### 3. Projeto `task-manager-api` (Python/Flask)
 
-1. **CRITICAL: Password Exposta no Serializador to_dict**
-   - **Arquivo/Linhas:** [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L21)
-   - **Justificativa:** O método `to_dict` expõe diretamente a senha/hash do usuário para chamadas HTTP externas.
-
-2. **CRITICAL: Hash de Senha Inseguro com MD5 puro**
-   - **Arquivo/Linhas:** [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L29-L32)
-   - **Justificativa:** Uso do algoritmo MD5 desatualizado e sem salt para armazenar as credenciais de acesso no banco de dados.
-
-3. **CRITICAL: Autenticação por Token Fake e Previsível**
-   - **Arquivo/Linhas:** [user_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/user_routes.py#L210)
-   - **Justificativa:** O login apenas devolve `'fake-jwt-token-' + str(user.id)` e nenhuma rota valida autenticação ou valida a presença do token.
-
-4. **CRITICAL: Segredos de SMTP Hardcoded**
-   - **Arquivo/Linhas:** [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py#L7-L10)
-   - **Justificativa:** Host, porta, usuário e senha literal do servidor de e-mails de notificação estão expostos como constantes de instância.
-
-5. **HIGH: db.create_all() Executado no Startup**
-   - **Arquivo/Linhas:** [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/app.py#L30-L31)
-   - **Justificativa:** Side-effect estrutural no boot da aplicação, recriando tabelas silenciosamente sem controle de migrações estruturadas.
-
-6. **HIGH: God Handlers no Fluxo de Tasks**
-   - **Arquivo/Linhas:** [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py)
-   - **Justificativa:** Controladores concentram regras de negócios, serializações sob medida, e consultas SQL complexas acoplados na camada HTTP.
-
-7. **HIGH: Gargalo N+1 nas Tasks e Relatórios**
-   - **Arquivo/Linhas:** [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L41-L57) e [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L55-L68)
-   - **Justificativa:** Realização de queries adicionais repetidas para buscar dados de categoria e usuários associados em loops.
-
-8. **HIGH: Módulo de Relatórios Contém CRUD de Categorias**
-   - **Arquivo/Linhas:** [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L157-L223)
-   - **Justificativa:** Violação grave de coesão do domínio, agrupando criação, atualização e exclusão de categorias no arquivo de relatórios.
-
-9. **MEDIUM: Captura de Exceção Genérica (Bare Except)**
-   - **Arquivo/Linhas:** [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L62) e [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L186)
-   - **Justificativa:** Silenciamento de stack traces e mascaramento de erros reais do banco de dados por capturas com `except:`.
-
-10. **MEDIUM: Casts sem Validação no Search de Tasks**
-    - **Arquivo/Linhas:** [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L261-L264)
-    - **Justificativa:** Conversão direta de inputs de requisição para `int` sem tratar exceções, gerando erros HTTP 500 do servidor se forem fornecidos valores inválidos.
-
-11. **MEDIUM: Lógica de Status, Overdue e Parsing Duplicada**
-    - **Arquivo/Linhas:** [task.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/task.py) e [helpers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/utils/helpers.py)
-    - **Justificativa:** Lógicas repetidas e inconsistentes de formatação de datas e checagem de prazos expirados geram riscos de manutenção.
-
-12. **MEDIUM: Camada de Serviços Subutilizada**
-    - **Arquivo/Linhas:** [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py)
-    - **Justificativa:** Estruturação de pasta `services/` e `utils/` criada mas a maior parte da lógica permanece espalhada nos handlers de rotas.
+| ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
+| :-: | :--- | :--- | :--- | :--- |
+| 1 | **Password Exposta no Serializador** | CRITICAL | [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L21) | O dicionário gerado pelo serializador `to_dict` mantém e expõe a hash de senha em requisições de saída HTTP da API. |
+| 2 | **Hashing Fraco via MD5 puro** | CRITICAL | [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L29-L32) | Uso do MD5 puro e sem salting individual para guardar credenciais, vulnerável a quebra por tabelas de arco-íris. |
+| 3 | **Autenticação por Token Falso** | CRITICAL | [user_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/user_routes.py#L210) | O login apenas gera um token previsível e nenhuma rota da aplicação valida ou exige a presença do token nos cabeçalhos. |
+| 4 | **Credenciais de SMTP Hardcoded** | CRITICAL | [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py#L7-L10) | Senha literal, usuário, host e porta do servidor de emails de notificação configurados estaticamente no código. |
+| 5 | **Efeitos de Startup db.create_all()** | HIGH | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/app.py#L30-L31) | Criação de tabelas no boot da API. Gera acoplamento e efeitos operacionais inesperados se executado concorrentemente. |
+| 6 | **God Handlers de Rotas** | HIGH | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py) | Handlers de rota centralizando lógicas complexas de busca, formatações especiais de dados e queries ORM complexas. |
+| 7 | **Gargalo N+1 em Tasks e Relatórios** | HIGH | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L41-L57), [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L55-L68) | Queries extras repetidas para carregar dados de relacionamento (categoria/usuário) dentro de loops iterativos de listas. |
+| 8 | **Domínio de Categoria Deslocado** | HIGH | [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L157-L223) | Rotas completas de CRUD de categorias agregadas indevidamente dentro do blueprint de relatórios (falta de coesão). |
+| 9 | **Swallowing de Exceções Genéricas** | MEDIUM | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L62), [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L186) | Captura de exceção genérica com `except:` omitindo logs detalhados e dificultando depurações estruturadas. |
+| 10 | **Casts de Dados sem Validação** | MEDIUM | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L261-L264) | Parsing direto de inputs de requisição para `int` sem tratamento de `ValueError`, retornando erros 500 em entradas mal formatadas. |
+| 11 | **Lógica Overdue Duplicada** | MEDIUM | [task.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/task.py) e [helpers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/utils/helpers.py) | Cálculos e verificações de datas expiradas implementados de forma duplicada e inconsistente em múltiplos arquivos. |
+| 12 | **Camadas de Serviço Ignoradas** | MEDIUM | [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py) | Estrutura de pasta de serviços criada, porém subutilizada com a maior parte da lógica acoplada nas rotas. |
 
 ---
 
@@ -259,38 +160,10 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 #### `code-smells-project`
 ```
 Antes:
-.
-├── app.py
-├── controllers.py
-├── database.py
-├── models.py
-└── requirements.txt
+(estrutura original)
 
 Depois:
-.
-├── .env.example
-├── app.py
-├── requirements.txt
-├── README.md
-└── src/
-    ├── app.py
-    ├── config/
-    │   ├── database.py
-    │   └── settings.py
-    ├── controllers/
-    │   ├── __init__.py
-    │   ├── pedido.py
-    │   ├── produto.py
-    │   └── usuario.py
-    ├── middlewares/
-    │   └── error_handler.py
-    ├── models/
-    │   ├── __init__.py
-    │   ├── pedido.py
-    │   ├── produto.py
-    │   └── usuario.py
-    └── views/
-        └── routes.py
+(estrutura refatorada)
 ```
 
 
