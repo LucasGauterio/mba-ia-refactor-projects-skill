@@ -51,15 +51,15 @@ DB tables:     <Tabelas encontradas>
 
 ---
 
-## FASE 2: ARCHITECTURE AUDIT REPORT
+## FASE 2: RELATÓRIO DE AUDITORIA ARQUITETURAL
 
-Audite o código-fonte em busca de anti-patterns e vulnerabilidades presentes em `catalogo_antipatterns.md`.
-1. Para cada arquivo do projeto, identifique ocorrências do catálogo.
-2. Classifique a severidade de cada achado em: `CRITICAL`, `HIGH`, `MEDIUM` ou `LOW`.
+Audite todo o código-fonte do subprojeto em busca de anti-patterns e vulnerabilidades presentes em `catalogo_antipatterns.md`.
+1. Para cada arquivo do subprojeto, identifique ocorrências do catálogo. Você deve mapear e listar absolutamente TODOS os problemas encontrados de todas as severidades, sem omitir nada.
+2. Classifique a severidade de cada achado em: `CRITICAL`, `HIGH`, `MEDIUM` ou `LOW`. Garanta que os problemas de severidade `LOW` (como Magic Strings e configurações hardcoded de porta/debug) sejam identificados e inclusos no relatório.
 3. Adicione o arquivo exato e a linha/intervalo de linhas onde o problema ocorre.
-4. Explique detalhadamente o impacto e a recomendação de correção.
+4. **IDIOMA OBRIGATÓRIO:** Todos os resumos de análise, descrições, impactos e recomendações do relatório de auditoria DEVEM ser redigidos inteiramente em **Português**, mantendo a consistência do repositório.
 5. Imprima no console o relatório no formato padronizado definido em `template_relatorio.md` ordenando por severidade (`CRITICAL` primeiro, depois `HIGH`, `MEDIUM`, `LOW`).
-6. **MÍNIMO DE FINDINGS:** Identifique pelo menos 5 findings, incluindo pelo menos 1 `CRITICAL` ou `HIGH`.
+6. **MÍNIMO DE FINDINGS:** Identifique pelo menos 5 findings, incluindo todos os problemas de severidade `CRITICAL`, `HIGH`, `MEDIUM` e `LOW` existentes na base de código.
 7. **APIS DEPRECATED:** Verifique ativamente se há APIs obsoletas ou desencorajadas (ex: MD5 para senhas) e inclua no relatório.
 8. **CONFIRMAÇÃO OBRIGATÓRIA:** Pare a execução, apresente o relatório impresso na tela e pergunte explicitamente ao usuário:
    `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]`
