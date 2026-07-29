@@ -250,7 +250,7 @@ A independência de tecnologia foi garantida por meio dos seguintes pilares no d
 ### Resumo dos Relatórios de Auditoria
 | Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|---|
-| `code-smells-project` | 4 | 2 | 2 | 0 | 8 |
+| `code-smells-project` | - | - | - | - | - |
 | `ecommerce-api-legacy` | - | - | - | - | - |
 | `task-manager-api` | - | - | - | - | - |
 
@@ -315,25 +315,25 @@ Depois:
 ### Checklist de Validação
 
 #### Projeto 1: `code-smells-project`
-- [x] **Fase 1: Linguagem detectada corretamente:** Sim. Detectou `Language: Python` (linha 17 de `session.md`).
-- [x] **Fase 1: Framework detectado corretamente:** Sim. Detectou `Framework: Flask 3.1.1` (linha 18 de `session.md`).
-- [x] **Fase 1: Domínio da aplicação descrito corretamente:** Sim. Identificado como `Domain: E-commerce / Loja (produtos, usuarios, pedidos, itens_pedido)` (linha 20 de `session.md`).
-- [x] **Fase 1: Número de arquivos analisados condiz com a realidade:** Sim. Identificou `Source files: 4` (linha 22 de `session.md`), que corresponde aos arquivos originais (`app.py`, `controllers.py`, `database.py`, `models.py`).
-- [x] **Fase 2: Relatório segue o template definido nos arquivos de referência:** Sim. Segue o template com seções de resumo e findings estruturados (linhas 27-36 de `session.md`).
-- [x] **Fase 2: Cada finding tem arquivo e linhas exatos:** Sim. Mapeamento de arquivos e linhas explicitados em todos os findings (ex: `models.py:28` para SQL Injection na linha 39 de `session.md`).
-- [x] **Fase 2: Findings ordenados por severidade (CRITICAL -> LOW):** Sim. Ordenados de `CRITICAL` a `MEDIUM` no relatório (linhas 38-85 de `session.md`).
-- [x] **Fase 2: Mínimo de 5 findings identificados:** Sim. Identificou 8 findings (4 `CRITICAL`, 2 `HIGH`, 2 `MEDIUM`) (linha 34 de `session.md`).
-- [x] **Fase 2: Detecção de APIs deprecated incluída (se aplicável):** Sim. Identificou o uso de texto limpo para senhas e recomendou hashes adequados (`models.py:109-111` na linha 45 de `session.md`).
-- [x] **Fase 2: Skill pausa e pede confirmação antes da Fase 3:** Sim. Pausa na linha 90 de `session.md` com `Proceed with refactoring (Phase 3)? [y/n]` e aguarda o input `y`.
-- [x] **Fase 3: Estrutura de diretórios segue padrão MVC:** Sim. Criou a estrutura em `src/` com `config/`, `models/`, `controllers/`, `views/` e `middlewares/` (linhas 115-133 de `session.md`).
-- [x] **Fase 3: Configuração extraída para módulo de config (sem hardcoded):** Sim. Configurações salvas em `src/config/settings.py` e gerado `.env.example` (linhas 111 e 119 de `session.md`).
-- [x] **Fase 3: Models criados para abstrair dados:** Sim. Criou `src/models/pedido.py`, `src/models/produto.py` e `src/models/usuario.py` (linhas 129-131 de `session.md`).
-- [x] **Fase 3: Views/Routes separadas para visualização ou roteamento:** Sim. Rotas separadas em `src/views/routes.py` (linha 133 de `session.md`).
-- [x] **Fase 3: Controllers concentram o fluxo da aplicação:** Sim. Criou `src/controllers/pedido.py`, `src/controllers/produto.py` e `src/controllers/usuario.py` (linhas 122-124 de `session.md`).
-- [x] **Fase 3: Error handling centralizado:** Sim. Criou o middleware global `src/middlewares/error_handler.py` (linha 126 de `session.md`).
-- [x] **Fase 3: Entry point claro:** Sim. Entrypoint principal em `src/app.py` com o root `app.py` servindo como wrapper limpo de composição (linhas 112 e 116 de `session.md`).
-- [x] **Fase 3: Aplicação inicia sem erros:** Sim. Log de validação `✓ Application boots without errors` (linha 136 de `session.md`).
-- [x] **Fase 3: Endpoints originais respondem corretamente:** Sim. Log de validação `✓ All endpoints respond correctly` (linha 137 de `session.md`).
+- [ ] Fase 1: Linguagem detectada corretamente
+- [ ] Fase 1: Framework detectado corretamente
+- [ ] Fase 1: Domínio da aplicação descrito corretamente
+- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
+- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
+- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [ ] Fase 2: Mínimo de 5 findings identificados
+- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
+- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [ ] Fase 3: Models criados para abstrair dados
+- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [ ] Fase 3: Controllers concentram o fluxo da aplicação
+- [ ] Fase 3: Error handling centralizado
+- [ ] Fase 3: Entry point claro
+- [ ] Fase 3: Aplicação inicia sem erros
+- [ ] Fase 3: Endpoints originais respondem corretamente
 
 
 
