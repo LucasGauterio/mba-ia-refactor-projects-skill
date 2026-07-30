@@ -10,3 +10,7 @@ venv/
 # SQLite
 *.db
 instance/
+
+# WSL / local debug
+venv-wsl/
+*.log

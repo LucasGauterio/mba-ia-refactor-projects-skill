@@ -1,70 +1,70 @@
 # RELATÓRIO DE AUDITORIA ARQUITETURAL
 
 Projeto: `ecommerce-api-legacy`
-Stack:   JavaScript (Node.js) + Express
-Arquivos: 3 | ~183 linhas estimadas
+Stack:   Node.js + Express
+Arquivos: 3 | ~180 linhas
 
 ## Resumo
 CRITICAL: 3 | HIGH: 3 | MEDIUM: 1 | LOW: 2
 
 ## Achados
 
-### [CRITICAL] Insecure / Custom Cryptography
-- **Arquivo:** [utils.js](../ecommerce-api-legacy/src/utils.js#L17-L23) e [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L68)
-- **Descrição:** Armazenamento e manipulação de senhas usando um algoritmo personalizado (`badCrypto`) baseado em transformações cíclicas de strings em base64. O fluxo também fornece uma senha estática padrão (`"123456"`) caso nenhuma senha seja fornecida.
-- **Impacto:** A criptografia customizada é extremamente fraca e trivial de ser revertida ou quebrada por ataques de força bruta. Se o banco de dados for exposto, todas as senhas dos usuários estarão comprometidas.
-- **Recomendação:** Substituir a criptografia caseira por um algoritmo moderno e robusto baseado em salt único por usuário (ex: PBKDF2 ou bcrypt nativo do Node.js através da biblioteca `crypto`).
+### [CRITICAL] Insecure / Custom Cryptography (Criptografia Fraca / Customizada)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L68) e [src/utils.js](../ecommerce-api-legacy/src/utils.js#L17-L23)
+- **Descrição:** Utilização de um algoritmo de criptografia customizado (`badCrypto`) baseado em codificação repetitiva Base64 sem salting para armazenar senhas de usuários no banco de dados.
+- **Impacto:** Vulnerabilidade grave que permite reverter ou quebrar facilmente as senhas dos usuários por ataques de dicionário ou tabelas rainbow se a base de dados for exposta.
+- **Recomendação:** Adotar algoritmos de hash seguros padrão da indústria, como PBKDF2 (nativo do Node.js via módulo `crypto`) ou `bcrypt`, utilizando salts gerados de maneira segura para cada senha.
 
-### [CRITICAL] Hardcoded Secrets & Info Leakage
-- **Arquivo:** [utils.js](../ecommerce-api-legacy/src/utils.js#L2-L5) e [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L45)
-- **Descrição:** Credenciais administrativas de banco de dados, chaves secretas de gateways de pagamento e contas de SMTP configuradas como valores literais estáticos (chumbados) diretamente no código-fonte. Além disso, existe um log de console (`console.log`) que exibe dados de cartões de crédito e chaves privadas do gateway de pagamento durante a execução do checkout.
-- **Impacto:** Vazamento de segredos para repositórios públicos e logs de depuração. Comprometimento de gateways financeiros de produção e servidores de email.
-- **Recomendação:** Mover todos os segredos para variáveis de ambiente carregadas via arquivo `.env` (ex. usando `process.env`) e remover logs de console que expõem informações sensíveis de cartões de crédito e chaves privadas.
+### [CRITICAL] Hardcoded Secrets (Segredos no Código Fonte)
+- **Arquivo:** [src/utils.js](../ecommerce-api-legacy/src/utils.js#L2-L5)
+- **Descrição:** Chaves privadas, tokens e credenciais de produção (`paymentGatewayKey`, `dbPass`, `dbUser`) estão chumbados no código fonte em um arquivo JavaScript.
+- **Impacto:** Risco severo de vazamento de segredos de infraestrutura e gateway financeiro caso o código fonte seja versionado ou compartilhado publicamente.
+- **Recomendação:** Carregar todas as configurações sensíveis de variáveis de ambiente (`process.env`) e manter fallbacks seguros apenas para fins de desenvolvimento local, configurando o arquivo `.env`.
 
-### [CRITICAL] The Blob / God Class
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L1-L139)
-- **Descrição:** A classe `AppManager` atua como um monolito completo que gerencia a inicialização da conexão com o banco de dados SQLite em memória, definição do esquema relacional, inserção de dados estáticos iniciais, definição de rotas do Express, tratamento de requisições HTTP e orquestração de toda a lógica de negócio do sistema.
-- **Impacto:** Acoplamento extremamente elevado, impossibilidade de criar testes unitários isolados, complexidade excessiva de manutenção e alto risco de introdução de novos bugs ao alterar qualquer funcionalidade elementar.
-- **Recomendação:** Refatorar a aplicação dividindo-a nas camadas clássicas de MVC (Model-View-Controller). Mover as configurações para `src/config/`, os modelos de acesso a banco para `src/models/`, a lógica de negócio para `src/controllers/` e os rotas para `src/routes/`.
-
----
-
-### [HIGH] Query N+1 Performance Bottleneck
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L80-L129)
-- **Descrição:** O endpoint `/api/admin/financial-report` faz uma busca por todos os cursos cadastrados e, para cada curso, dispara de forma aninhada uma busca por matrículas. Em seguida, para cada matrícula, realiza mais duas buscas independentes no banco para obter detalhes do usuário e do pagamento correspondente, gerando uma explosão de conexões e queries (`1 + C + E * 2` consultas, onde C é o número de cursos e E é o total de matrículas).
-- **Impacto:** Degradação massiva da performance e tempo de resposta da API à medida que a base de dados cresce. Risco elevado de esgotamento de conexões ou travamento de processos do SQLite.
-- **Recomendação:** Reescrever a lógica do relatório financeiro utilizando uma única consulta SQL com JOINs entre `courses`, `enrollments`, `users` e `payments`, consolidando a agregação de dados na memória do controlador.
-
-### [HIGH] Non-Atomic Multi-write Flows / Transaction Violation
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L28-L78)
-- **Descrição:** No fluxo de checkout da API, são executados múltiplos comandos SQL de escrita em sequência (inserção de usuário, matrícula, pagamento e log de auditoria) de forma solta e assíncrona, sem o uso de transações de banco de dados (`BEGIN TRANSACTION`, `COMMIT`, `ROLLBACK`).
-- **Impacto:** Caso ocorra uma falha ou interrupção durante a execução dos inserts sequenciais, dados parciais ficarão persistidos no banco de dados, resultando em usuários órfãos, matrículas ativas sem registros de pagamentos válidos ou falta de logs obrigatórios de auditoria.
-- **Recomendação:** Envolver o fluxo completo de escrita de checkout em uma transação atômica do SQLite (`db.serialize` executando transações), realizando o `ROLLBACK` completo das alterações em caso de qualquer exceção.
-
-### [HIGH] Referential Integrity Failure / Cascade Deleter
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L131-L137)
-- **Descrição:** O endpoint de exclusão de usuário deleta o registro da tabela `users` diretamente, mas não realiza a limpeza das matrículas ou pagamentos vinculados a esse usuário, deixando registros órfãos que apontam para chaves estrangeiras inexistentes.
-- **Impacto:** Inconsistência relacional severa no banco de dados. Qualquer relatório ou consulta posterior que faça JOINs estritos com usuários não retornará registros de matrículas órfãs ou poderá estourar exceções de ponteiro nulo ao tentar ler o nome ou email do usuário deletado.
-- **Recomendação:** Habilitar a verificação de chaves estrangeiras no SQLite e garantir que a exclusão do usuário execute a deleção coordenada (em cascata) das tabelas dependentes (`payments` e `enrollments`) dentro de uma operação transacional.
+### [CRITICAL] Auth Illusion / Lack of Admin Authorization (Ausência de Autorização em Rotas Críticas)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L80)
+- **Descrição:** A rota de relatório financeiro administrativo `/api/admin/financial-report` está exposta publicamente sem nenhum controle de acesso ou validação de token/sessão.
+- **Impacto:** Qualquer usuário pode consultar dados confidenciais de faturamento e informações pessoais de estudantes matriculados apenas chamando a rota HTTP.
+- **Recomendação:** Criar um middleware de autenticação/autorização que valide a presença de um token administrativo seguro (ex: `ADMIN_TOKEN` do `.env`) enviado no cabeçalho `Authorization: Bearer <token>`.
 
 ---
 
-### [MEDIUM] Cover Your Assets / Generic Exception Swallowing
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L41) (e linhas 51, 55, 70, 84, etc.)
-- **Descrição:** Tratamento de erros de banco de dados e APIs feito através de capturas genéricas que simplesmente retornam mensagens opacas para o cliente (ex: "Erro DB", "Erro Pagamento") sem efetuar qualquer tipo de log estruturado ou rastreamento interno do erro original.
-- **Impacto:** Dificuldade acentuada na identificação e correção de problemas em ambiente de produção (falhas silenciosas).
-- **Recomendação:** Centralizar o fluxo de captura e tratamento de erros do Express em um middleware dedicado, logando o stack trace no console e retornando um erro padronizado para o cliente.
+### [HIGH] The Blob / God Class (Classe Todo-Poderosa)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L4-L139)
+- **Descrição:** A classe `AppManager` possui responsabilidades múltiplas: gerencia a conexão e criação de tabelas do banco de dados SQLite, define todas as rotas da aplicação, implementa regras de negócio do checkout, formata as respostas HTTP e gera logs.
+- **Impacto:** Código acoplado, de difícil manutenção, com alto custo para escrita de testes unitários isolados e violação clara do Princípio de Responsabilidade Única (SRP).
+- **Recomendação:** Separar o projeto seguindo o padrão MVC: configurações do banco em `config/`, queries e mapeamento em `models/`, regras de fluxo no `controllers/`, definição de rotas em `routes/` e gerenciamento global no entrypoint `app.js`.
+
+### [HIGH] SQLite Thread-Unsafe & In-Memory Database State (Banco SQLite em Memória e Sem Persistência)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L7)
+- **Descrição:** A conexão SQLite é aberta em memória (`:memory:`) diretamente no construtor do `AppManager`, o que faz com que todos os dados gravados sejam perdidos ao reiniciar o servidor, além de compartilhar uma única instância mutável globalmente.
+- **Impacto:** Incompatibilidade com ambientes de produção e risco de erros de concorrência ou dados corrompidos.
+- **Recomendação:** Configurar uma conexão persistente do SQLite apontando para um arquivo local (ex: `./lms.db`), definido dinamicamente pelas configurações da camada `config/`.
+
+### [HIGH] Non-Atomic Multi-write Flows / Transaction Violation (Falta de Atomicidade em Operações de Escrita)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L50-L63)
+- **Descrição:** As queries de inserção de matrículas, pagamentos e logs de auditoria no fluxo de checkout ocorrem de forma assíncrona encadeada sem estarem envelopadas sob uma transação de banco de dados.
+- **Impacto:** Inconsistência relacional grave caso ocorra um erro de sistema ou queda do servidor após a inserção da matrícula mas antes do registro do pagamento.
+- **Recomendação:** Implementar a execução das queries sequenciais dentro de uma transação explícita do SQLite (`BEGIN TRANSACTION`, com correspondente `COMMIT` se tudo der certo ou `ROLLBACK` em caso de erro).
 
 ---
 
-### [LOW] Hardcoded Port / Configuration Fallback
-- **Arquivo:** [app.js](../ecommerce-api-legacy/src/app.js#L12-L14) e [utils.js](../ecommerce-api-legacy/src/utils.js#L6)
-- **Descrição:** A porta TCP do servidor Express está fixada estaticamente como `3000` nas configurações chumbadas.
-- **Impacto:** Limita a portabilidade da aplicação para implantações em ambientes de nuvem, contêineres Docker ou plataformas PaaS que injetam a porta de forma dinâmica via variável de ambiente `PORT`.
-- **Recomendação:** Permitir que o servidor Express escute na porta definida pela variável de ambiente `process.env.PORT`, usando `3000` apenas como fallback.
+### [MEDIUM] Query N+1 Performance Bottleneck (Gargalo de Performance Query N+1)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L80-L129)
+- **Descrição:** Na rota de relatório financeiro `/api/admin/financial-report`, para cada curso cadastrado, o sistema realiza uma nova query para obter as matrículas. Para cada matrícula encontrada, realiza mais duas queries adicionais para buscar dados do usuário e do pagamento.
+- **Impacto:** Desempenho severamente prejudicado conforme o número de matrículas e cursos aumenta devido à multiplicação exponencial de requisições ao banco.
+- **Recomendação:** Otimizar a consulta reescrevendo-a com um único comando SQL utilizando `LEFT JOIN` entre as tabelas `courses`, `enrollments`, `users` e `payments`, consolidando os dados em memória em uma única passada.
 
-### [LOW] Inline Domain Constants / Magic Strings
-- **Arquivo:** [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L46-L48) e [AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L108)
-- **Descrição:** Presença de strings estáticas espalhadas pelo código para validação de regras de domínio (ex: `'PAID'`, `'DENIED'`, `"4"` para checar prefixo do cartão).
-- **Impacto:** Facilidade de introdução de bugs por pequenos erros de digitação (typos) e aumento de custos de refatoração para mudar valores de regras de negócio.
-- **Recomendação:** Centralizar essas definições de domínio em um arquivo de constantes sob `src/config/constants.js`.
+---
+
+### [LOW] Referential Integrity Failure / Cascade Deleter (Falha na Remoção Consistente)
+- **Arquivo:** [src/AppManager.js](../ecommerce-api-legacy/src/AppManager.js#L131-L137)
+- **Descrição:** O endpoint `DELETE /api/users/:id` executa a exclusão de um registro na tabela `users` sem limpar ou atualizar os registros dependentes nas tabelas de matrículas (`enrollments`) e pagamentos (`payments`).
+- **Impacto:** Acúmulo de dados órfãos e quebra da integridade referencial funcional no banco.
+- **Recomendação:** Habilitar chaves estrangeiras (`PRAGMA foreign_keys = ON;`) no SQLite e configurar a remoção correspondente em cascata no banco ou manualmente de forma transacional.
+
+### [LOW] Hardcoded Port / Configuration Fallback (Porta TCP Sem Fallback e Debug Hardcoded)
+- **Arquivo:** [src/app.js](../ecommerce-api-legacy/src/app.js#L12) e [src/utils.js](../ecommerce-api-legacy/src/utils.js#L6)
+- **Descrição:** A porta do servidor está fixada como `3000` em um arquivo de configurações sem buscar flexibilidade a partir das variáveis de ambiente.
+- **Impacto:** Dificulta a portabilidade do aplicativo em ambientes de nuvem/containers que impõem portas customizadas dinamicamente.
+- **Recomendação:** Alterar a inicialização para ler `process.env.PORT` e permitir a parametrização apropriada do app.

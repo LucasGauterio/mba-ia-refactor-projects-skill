@@ -2,75 +2,81 @@
 
 Projeto: `code-smells-project`
 Stack:   Python + Flask
-Arquivos: 5 | ~500 linhas estimadas
+Arquivos: 4 | ~784 linhas estimadas
 
 ## Resumo
-CRITICAL: 4 | HIGH: 3 | MEDIUM: 1 | LOW: 2
+CRITICAL: 4 | HIGH: 4 | MEDIUM: 1 | LOW: 2
 
 ## Achados
 
-### [CRITICAL] Execução de SQL Arbitrário
-- **Arquivo:** [app.py](../code-smells-project/app.py#L59-L79) (rota `/admin/query`)
-- **Descrição:** A rota `/admin/query` aceita SQL livre enviado pelo cliente e o executa. Permite comprometimento total e direto do banco via HTTP.
-- **Impacto:** Qualquer usuário pode ler, alterar ou destruir todo o banco de dados e possivelmente executar comandos no sistema operacional dependendo das permissões do SQLite.
-- **Recomendação:** Remover completamente o endpoint de execução de query arbitrária do código de produção.
+### [CRITICAL] Spaghetti Code / SQL Injection
+- **Arquivo:** [models.py](../code-smells-project/models.py#L28) (Linhas 28, 48-50, 57-61, 68, 92, 110, 126-129, 140, 148-151, 155, 157-160, 163-166, 174, 188, 192, 220, 224, 279-281, 289-299)
+- **Descrição:** Concatenação direta de parâmetros dinâmicos em strings de consultas SQL brutas enviadas ao banco de dados SQLite. Isso ocorre em praticamente todos os métodos do arquivo `models.py` (ex. busca por ID, inserções, atualizações, filtros de produtos, etc.).
+- **Impacto:** Permite a execução de comandos SQL maliciosos arbitrários por usuários externos, expondo o banco de dados a vazamento total de informações, modificação indevida de dados e exclusão de tabelas.
+- **Recomendação:** Substituir todas as concatenações de strings em queries por consultas parametrizadas (Prepared Statements) utilizando placeholders `?` suportados pelo driver SQLite do Python.
 
-### [CRITICAL] Reset de DB sem Autenticação
-- **Arquivo:** [app.py](../code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`)
-- **Descrição:** A rota `/admin/reset-db` limpa todas as tabelas sem nenhuma autenticação, gerando perda total de dados com uma única chamada externa.
-- **Impacto:** Risco extremo de negação de serviço (DoS) e perda catastrófica de dados por chamadas não autorizadas.
-- **Recomendação:** Remover o endpoint ou protegê-lo com autenticação robusta (ex: tokens admin em variáveis de ambiente).
+### [CRITICAL] Insecure / Custom Cryptography (Armazenamento de Senhas em Texto Claro)
+- **Arquivo:** [database.py](../code-smells-project/database.py#L76) (Linhas 76-79) e [models.py](../code-smells-project/models.py#L110) (Linhas 110, 126-129)
+- **Descrição:** As senhas dos usuários (incluindo a senha administrativa padrão `"admin123"`) são inseridas, armazenadas e validadas em formato de texto claro (plain text), sem qualquer mecanismo de hash criptográfico.
+- **Impacto:** Se o banco de dados for exposto, todas as credenciais de usuários e administradores serão comprometidas instantaneamente de forma legível.
+- **Recomendação:** Utilizar um algoritmo robusto de hash criptográfico com salt integrado, como o PBKDF2 fornecido pela biblioteca nativa/dependente do framework (ex: `werkzeug.security.generate_password_hash` e `check_password_hash`).
 
-### [CRITICAL] SQL Injection por Concatenação
-- **Arquivo:** [models.py](../code-smells-project/models.py#L28) e [models.py](../code-smells-project/models.py#L47-L50)
-- **Descrição:** Consultas SQL montadas concatenando strings diretamente com inputs de requisição de usuário, abrindo múltiplas falhas graves de SQL Injection.
-- **Impacto:** Roubo de dados, bypass de autenticação e manipulação de registros de compras e usuários.
-- **Recomendação:** Substituir todas as concatenações por queries parametrizadas (Prepared Statements).
+### [CRITICAL] Auth Illusion / Fake Security Tokens (Ausência de Autenticação em Rotas Críticas)
+- **Arquivo:** [app.py](../code-smells-project/app.py#L47) (Linhas 47-57)
+- **Descrição:** O endpoint `/admin/reset-db` executa operações de exclusão em massa das tabelas do banco de dados sem exigir qualquer tipo de autenticação, cabeçalho de autorização ou token.
+- **Impacto:** Qualquer usuário mal-intencionado com acesso à rede pode enviar uma requisição HTTP POST para `/admin/reset-db` e apagar todos os dados operacionais da loja de forma irreversível.
+- **Recomendação:** Implementar um middleware de segurança ou decorator que verifique o token administrativo enviado no cabeçalho `Authorization: Bearer <token>` e valide contra o token configurado no ambiente (`ADMIN_TOKEN`).
 
-### [CRITICAL] Senhas em Texto Puro / Exposição
-- **Arquivo:** [database.py](../code-smells-project/database.py#L76-L79) e [models.py](../code-smells-project/models.py#L83)
-- **Descrição:** Senhas salvas sem hashing no banco e retornadas diretamente em texto limpo no payload JSON de APIs públicas.
-- **Impacto:** Vazamento massivo de credenciais de usuários e quebra total de privacidade.
-- **Recomendação:** Implementar hashing seguro de senhas com salting (ex: bcrypt ou pbkdf2) e remover o campo de senha do payload de retorno.
-
----
-
-### [HIGH] SECRET_KEY e DEBUG Hardcoded
-- **Arquivo:** [app.py](../code-smells-project/app.py#L7-L8)
-- **Descrição:** Chaves criptográficas do app salvas no código-fonte e modo debug ativo, facilitando falsificação de sessões e execução remota de código.
-- **Impacto:** Risco de sequestro de sessão e vazamento de informações internas em telas de erro.
-- **Recomendação:** Mover chaves e sinalizadores para variáveis de ambiente via arquivo `.env`.
-
-### [HIGH] Healthcheck com Vazamento
-- **Arquivo:** [controllers.py](../code-smells-project/controllers.py#L289-L290)
-- **Descrição:** Endpoint `/health` expõe explicitamente a `SECRET_KEY` e caminhos físicos do sistema no payload.
-- **Impacto:** Exposição de credenciais criptográficas cruciais e detalhes de infraestrutura para atacantes.
-- **Recomendação:** Retornar apenas status básico de saúde ("status": "healthy") sem segredos.
-
-### [HIGH] Conexão SQLite Global
-- **Arquivo:** [database.py](../code-smells-project/database.py#L10)
-- **Descrição:** Compartilhamento global de conexão SQLite entre threads paralelas do Flask com `check_same_thread=False`, gerando instabilidade de concorrência.
-- **Impacto:** Erros frequentes de travamento de escrita e corrupção física de dados.
-- **Recomendação:** Inicializar a conexão por requisição usando o contexto global `g` do Flask e fechá-la no app context teardown.
+### [CRITICAL] Backdoor Admin / Arbitrary SQL Execution
+- **Arquivo:** [app.py](../code-smells-project/app.py#L59) (Linhas 59-79)
+- **Descrição:** A rota `/admin/query` recebe uma instrução SQL genérica enviada no JSON da requisição e executa diretamente no banco de dados SQLite (`cursor.execute(query)`), retornando os resultados ou persistindo as alterações.
+- **Impacto:** Funciona como uma backdoor completa na aplicação, permitindo que qualquer pessoa com acesso à rota execute instruções SQL arbitrárias, burlando regras de negócio e de segurança.
+- **Recomendação:** Remover permanentemente o endpoint `/admin/query` do código-fonte da aplicação.
 
 ---
 
-### [MEDIUM] Pedidos sem Rollback Transacional
-- **Arquivo:** [models.py](../code-smells-project/models.py#L133-L169)
-- **Descrição:** Ações sequenciais de criação de pedidos e decremento de estoque sem transação lógica; falhas deixam o banco inconsistente.
-- **Impacto:** Pedidos criados sem itens correspondentes ou estoque decrementado incorretamente em falhas parciais.
-- **Recomendação:** Encapsular o fluxo dentro de blocos de transação SQL com `commit` e `rollback`.
+### [HIGH] SQLite Thread-Unsafe / Global Connection Sharing
+- **Arquivo:** [database.py](../code-smells-project/database.py#L4) (Linhas 4, 8-11)
+- **Descrição:** O arquivo `database.py` cria e gerencia uma conexão SQLite global única (`db_connection`) compartilhada entre requisições em diferentes threads (`check_same_thread=False`).
+- **Impacto:** O SQLite não é projetado para compartilhar uma única conexão simultaneamente entre múltiplas threads. Isso pode provocar erros de travamento (`database is locked`), instabilidade na concorrência da API e corrupção física do arquivo de banco de dados `loja.db`.
+- **Recomendação:** Utilizar o contexto de aplicação do Flask (`flask.g`) para criar, reutilizar e fechar uma conexão SQLite exclusiva por requisição HTTP, registrando uma função `@app.teardown_appcontext` para limpeza automática.
+
+### [HIGH] Non-Atomic Multi-write Flows / Transaction Violation
+- **Arquivo:** [models.py](../code-smells-project/models.py#L133) (Linhas 133-169)
+- **Descrição:** O fluxo de criação de pedidos no método `criar_pedido()` executa múltiplas operações de escrita (inserção de pedidos, inserção de itens de pedidos e atualização de estoque de produtos) de forma sequencial sem gerenciar transações atômicas de banco (ausência de instruções de rollback e controle transacional atômico).
+- **Impacto:** Se o processo falhar no meio (ex: erro ao atualizar estoque do segundo item do pedido), as operações anteriores (como a criação do registro do pedido) persistirão no banco, deixando a base de dados em estado inconsistente e gerando pedidos órfãos ou sem estoque correspondente.
+- **Recomendação:** Envolver o bloco de comandos de escrita indevida em uma transação segura executando `BEGIN TRANSACTION;` e manipulando com um bloco `try-except` para dar `db.commit()` em caso de sucesso absoluto ou `db.rollback()` em caso de qualquer exceção.
+
+### [HIGH] Query N+1 Performance Bottleneck
+- **Arquivo:** [models.py](../code-smells-project/models.py#L171) (Linhas 171-201, 203-233)
+- **Descrição:** Nos métodos de consulta de pedidos (`get_pedidos_usuario` e `get_todos_pedidos`), a aplicação faz um SELECT para buscar a lista de pedidos. Para cada pedido encontrado, ela realiza uma subquery para buscar os itens de pedido e, para cada item de pedido, faz um novo SELECT para obter o nome do produto correspondente.
+- **Impacto:** Gera degradação drástica de performance (problema de N+1 queries). Se houver 100 pedidos, cada um contendo 3 itens, a aplicação fará 1 + 100 + 300 = 401 consultas ao banco de dados para responder a uma única requisição.
+- **Recomendação:** Substituir o loop de subqueries por uma única consulta SQL otimizada usando `LEFT JOIN` entre as tabelas `pedidos`, `itens_pedido` e `produtos`, agrupando as informações no código Python antes de retornar.
+
+### [HIGH] Hardcoded Secrets & Info Leakage
+- **Arquivo:** [app.py](../code-smells-project/app.py#L7) (Linhas 7-8) e [controllers.py](../code-smells-project/controllers.py#L264) (Linhas 288-290)
+- **Descrição:** A chave secreta `SECRET_KEY` está fixada no código de inicialização do app. Além disso, a rota pública `/health` expõe informações de ambiente críticas, como o caminho do arquivo de banco de dados, se o debug está ativo e o valor em texto claro da chave secreta `SECRET_KEY`.
+- **Impacto:** Exposição de segredos de segurança em repositórios de código Git e vazamento de informações internas de infraestrutura, facilitando a quebra de segurança de sessão.
+- **Recomendação:** Carregar a `SECRET_KEY` de variáveis de ambiente com fallbacks seguros de desenvolvimento e remover qualquer campo sensível (ex: chave secreta, caminho físico de banco) da resposta do endpoint `/health`.
 
 ---
 
-### [LOW] Constantes de Domínio Inline
-- **Arquivo:** [controllers.py](../code-smells-project/controllers.py#L52)
-- **Descrição:** Strings de categorias de produtos válidas escritas inline como strings literais de validação repetidas em vários arquivos.
-- **Impacto:** Erros de digitação geram inconsistências difíceis de rastrear.
-- **Recomendação:** Centralizar valores de validação de domínio em arquivo de configuração/constantes.
+### [MEDIUM] Cover Your Assets / Generic Exception Swallowing
+- **Arquivo:** [controllers.py](../code-smells-project/controllers.py#L5) (Presente em quase todos os métodos de controllers)
+- **Descrição:** Quase todas as funções do controller utilizam blocos de `try-except Exception` genéricos que capturam qualquer exceção do sistema, imprimem no console padrão e retornam no JSON da resposta HTTP `{"erro": str(e)}`.
+- **Impacto:** Oculta falhas reais do sistema no servidor e vaza detalhes de stack trace, nomes de tabelas ou erros internos diretamente na resposta do cliente HTTP (vazamento de informação técnica e má prática de observabilidade).
+- **Recomendação:** Remover o tratamento genérico repetitivo dos controllers e centralizar o tratamento de erros no Flask usando um decorator global `@app.errorhandler(Exception)` que loga o erro completo e retorna uma mensagem segura genérica (como "Ocorreu um erro interno no servidor") com status HTTP 500.
 
-### [LOW] Porta Hardcoded
-- **Arquivo:** [app.py](../code-smells-project/app.py#L90)
-- **Descrição:** Porta TCP `5000` fixada estaticamente no bootstrap da aplicação.
-- **Impacto:** Impede o deploy dinâmico do app em ambientes modernos de contêineres que definem a porta via variável de ambiente.
-- **Recomendação:** Ler a porta de `os.environ.get("PORT", 5000)`.
+---
+
+### [LOW] Inline Domain Constants / Magic Strings
+- **Arquivo:** [models.py](../code-smells-project/models.py#L122) (Linhas 122, 133, 149, 171, 247, 250, 253) e [controllers.py](../code-smells-project/controllers.py#L52) (Linhas 52, 242)
+- **Descrição:** Uso repetitivo de valores literais de strings para verificar status de pedidos (`"pendente"`, `"aprovado"`, `"cancelado"`, `"enviado"`, `"entregue"`), tipos de usuários (`"cliente"`, `"admin"`) e categorias válidas de produtos.
+- **Impacto:** Dificulta a manutenibilidade e aumenta a possibilidade de introdução de bugs silenciosos caso ocorram erros de digitação inconsistentes em diferentes partes do código.
+- **Recomendação:** Centralizar todas as constantes de domínio em um arquivo central de configuração ou constantes (ex: `src/config/settings.py` ou `constants.py`) e importá-las nas validações e inicializações.
+
+### [LOW] Hardcoded Port / Configuration Fallback
+- **Arquivo:** [app.py](../code-smells-project/app.py#L88) (Linhas 85, 88)
+- **Descrição:** A porta TCP `5000` e o estado `debug=True` estão fixados de forma rígida no bootstrap da aplicação na chamada `app.run()`.
+- **Impacto:** Reduz a portabilidade da aplicação, dificultando a execução sob diferentes portas em ambientes conteinerizados ou plataformas de deploy em nuvem.
+- **Recomendação:** Obter dinamicamente a porta e o modo de depuração a partir de variáveis de ambiente (`PORT` e `FLASK_DEBUG`) com valores de fallback seguros.

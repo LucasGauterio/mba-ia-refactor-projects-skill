@@ -8,18 +8,18 @@ Este repositório contém a implementação de uma Skill de IA para refatoraçã
 
 | ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
 | :-: | :--- | :--- | :--- | :--- |
-| 1 | **Execução de SQL Arbitrário** | CRITICAL | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L59-L79) (rota `/admin/query`) | A rota `/admin/query` aceita SQL livre enviado pelo cliente e o executa. Permite comprometimento total e direto do banco via HTTP. |
-| 2 | **Reset de DB sem Autenticação** | CRITICAL | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`) | A rota `/admin/reset-db` limpa todas as tabelas sem nenhuma autenticação, gerando perda total de dados com uma única chamada externa. |
-| 3 | **SQL Injection por Concatenação** | CRITICAL | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L28) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L47-L50) | Consultas SQL montadas concatenando strings diretamente com inputs de requisição de usuário, abrindo múltiplas falhas graves de SQL Injection. |
-| 4 | **Senhas em Texto Puro / Exposição** | CRITICAL | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L76-L79) e [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L83) | Senhas salvas sem hashing no banco e retornadas diretamente em texto limpo no payload JSON de APIs públicas. |
-| 5 | **SECRET_KEY e DEBUG Hardcoded** | HIGH | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/app.py#L7-L8) | Chaves criptográficas do app salvas no código-fonte e modo debug ativo, facilitando falsificação de sessões e execução remota de código. |
-| 6 | **Healthcheck com Vazamento** | HIGH | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L289-L290) | Endpoint `/health` expõe explicitamente a `SECRET_KEY` e caminhos físicos do sistema no payload. |
-| 7 | **Conexão SQLite Global** | HIGH | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L10) | Compartilhamento global de conexão SQLite entre threads paralelas do Flask com `check_same_thread=False`, gerando instabilidade de concorrência. |
-| 8 | **Pedidos sem Rollback Transacional** | HIGH | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L133-L169) | Ações sequenciais de criação de pedidos e decremento de estoque sem transação lógica; falhas deixam o banco inconsistente. |
-| 9 | **Acoplamento nos Controllers** | MEDIUM | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py) | Mistura de controle HTTP, parsing, validação básica e lógicas de queries diretamente dentro de arquivos de controle. |
-| 10 | **Gargalo N+1 em Pedidos** | MEDIUM | [models.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/models.py#L171-L233) | Consultas sequenciais a produtos e itens rodadas em laço para cada pedido, aumentando a latência com o volume de dados. |
-| 11 | **Schema sem Constraints** | MEDIUM | [database.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/database.py#L37-L53) | Tabelas criadas sem Foreign Keys e constraints de unicidade (`UNIQUE`), facilitando chaves órfãs e inconsistências relacionais. |
-| 12 | **Constantes de Domínio Inline** | LOW | [controllers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/code-smells-project/controllers.py#L52) | Strings de categorias de produtos válidas escritas inline como strings literais de validação repetidas em vários arquivos. |
+| 1 | **Execução de SQL Arbitrário** | CRITICAL | [app.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/app.py#L59-L79) (rota `/admin/query`) | A rota `/admin/query` aceita SQL livre enviado pelo cliente e o executa. Permite comprometimento total e direto do banco via HTTP. |
+| 2 | **Reset de DB sem Autenticação** | CRITICAL | [app.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/app.py#L47-L57) (rota `/admin/reset-db`) | A rota `/admin/reset-db` limpa todas as tabelas sem nenhuma autenticação, gerando perda total de dados com uma única chamada externa. |
+| 3 | **SQL Injection por Concatenação** | CRITICAL | [models.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/models.py#L28) e [models.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/models.py#L47-L50) | Consultas SQL montadas concatenando strings diretamente com inputs de requisição de usuário, abrindo múltiplas falhas graves de SQL Injection. |
+| 4 | **Senhas em Texto Puro / Exposição** | CRITICAL | [database.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/database.py#L76-L79) e [models.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/models.py#L83) | Senhas salvas sem hashing no banco e retornadas diretamente em texto limpo no payload JSON de APIs públicas. |
+| 5 | **SECRET_KEY e DEBUG Hardcoded** | HIGH | [app.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/app.py#L7-L8) | Chaves criptográficas do app salvas no código-fonte e modo debug ativo, facilitando falsificação de sessões e execução remota de código. |
+| 6 | **Healthcheck com Vazamento** | HIGH | [controllers.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/controllers.py#L289-L290) | Endpoint `/health` expõe explicitamente a `SECRET_KEY` e caminhos físicos do sistema no payload. |
+| 7 | **Conexão SQLite Global** | HIGH | [database.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/database.py#L10) | Compartilhamento global de conexão SQLite entre threads paralelas do Flask com `check_same_thread=False`, gerando instabilidade de concorrência. |
+| 8 | **Pedidos sem Rollback Transacional** | HIGH | [models.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/models.py#L133-L169) | Ações sequenciais de criação de pedidos e decremento de estoque sem transação lógica; falhas deixam o banco inconsistente. |
+| 9 | **Acoplamento nos Controllers** | MEDIUM | [controllers.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/controllers.py) | Mistura de controle HTTP, parsing, validação básica e lógicas de queries diretamente dentro de arquivos de controle. |
+| 10 | **Gargalo N+1 em Pedidos** | MEDIUM | [models.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/models.py#L171-L233) | Consultas sequenciais a produtos e itens rodadas em laço para cada pedido, aumentando a latência com o volume de dados. |
+| 11 | **Schema sem Constraints** | MEDIUM | [database.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/database.py#L37-L53) | Tabelas criadas sem Foreign Keys e constraints de unicidade (`UNIQUE`), facilitando chaves órfãs e inconsistências relacionais. |
+| 12 | **Constantes de Domínio Inline** | LOW | [controllers.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/code-smells-project/controllers.py#L52) | Strings de categorias de produtos válidas escritas inline como strings literais de validação repetidas em vários arquivos. |
 
 ---
 
@@ -27,18 +27,18 @@ Este repositório contém a implementação de uma Skill de IA para refatoraçã
 
 | ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
 | :-: | :--- | :--- | :--- | :--- |
-| 1 | **Segredos Hardcoded no Código** | CRITICAL | [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L1-L7) | Chaves privadas do gateway de pagamento, SMTP e dados de banco salvos de forma estática no código-fonte. |
-| 2 | **Vazamento de Cartão nos Logs** | CRITICAL | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L45) | Console logs exibem abertamente chaves privadas e o número de cartão de crédito no momento do checkout. |
-| 3 | **Senha do Seed em Texto Puro** | CRITICAL | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L18) | Usuário seed inicial inserido com a senha literal plaintext `'123'` sem passar por nenhum algoritmo de hash. |
-| 4 | **Hashing badCrypto Fraco e Previsível** | CRITICAL | [utils.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/utils.js#L17-L23) | Algoritmo de hash customizado usando conversões simples e previsíveis em base64, vulnerável a colisões e sem salting. |
-| 5 | **Relatório Financeiro Público** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L80) | Rota administrativa `/api/admin/financial-report` expõe faturamento e dados de alunos de forma pública, sem token. |
-| 6 | **Checkout sem Transação de Banco** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L50-L63) | Matrícula e pagamentos gravados de forma assíncrona desacoplada; falhas criam matrículas válidas sem nenhum pagamento. |
-| 7 | **Schema sem UNIQUE / FKs** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L12-L16) | Falta de constraint `UNIQUE(email)` em users e de foreign keys nas tabelas associativas do SQLite. |
-| 8 | **Cascading Delete Ausente** | HIGH | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L131-L137) | Deleção de usuário remove o registro pai do banco mas deixa matrículas e pagamentos órfãos apontando para IDs nulos. |
-| 9 | **Payload com Nomes Opacos** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L29-L33) | Parâmetros de requisição curtos e opacos (`usr`, `eml`, `pwd`, `card`) que dificultam leitura e integrações limpas de contratos. |
-| 10 | **Senha Fallback Fraca** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L68) | Atribuição da senha padrão fraca `'123456'` caso o parâmetro `pwd` seja omitido no checkout. |
-| 11 | **Gargalo N+1 no Relatório** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L89-L127) | Laços assíncronos que executam queries extras de matrículas e pagamentos para cada curso listado. |
-| 12 | **Banco SQLite em Memória** | MEDIUM | [AppManager.js](file:///g:/Projects/mba-ia-refactor-projects-skill/ecommerce-api-legacy/src/AppManager.js#L7) | Conexão inicializada em `:memory:`, provocando perda total de usuários e vendas em caso de qualquer reboot da aplicação. |
+| 1 | **Segredos Hardcoded no Código** | CRITICAL | [utils.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/utils.js#L1-L7) | Chaves privadas do gateway de pagamento, SMTP e dados de banco salvos de forma estática no código-fonte. |
+| 2 | **Vazamento de Cartão nos Logs** | CRITICAL | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L45) | Console logs exibem abertamente chaves privadas e o número de cartão de crédito no momento do checkout. |
+| 3 | **Senha do Seed em Texto Puro** | CRITICAL | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L18) | Usuário seed inicial inserido com a senha literal plaintext `'123'` sem passar por nenhum algoritmo de hash. |
+| 4 | **Hashing badCrypto Fraco e Previsível** | CRITICAL | [utils.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/utils.js#L17-L23) | Algoritmo de hash customizado usando conversões simples e previsíveis em base64, vulnerável a colisões e sem salting. |
+| 5 | **Relatório Financeiro Público** | HIGH | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L80) | Rota administrativa `/api/admin/financial-report` expõe faturamento e dados de alunos de forma pública, sem token. |
+| 6 | **Checkout sem Transação de Banco** | HIGH | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L50-L63) | Matrícula e pagamentos gravados de forma assíncrona desacoplada; falhas criam matrículas válidas sem nenhum pagamento. |
+| 7 | **Schema sem UNIQUE / FKs** | HIGH | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L12-L16) | Falta de constraint `UNIQUE(email)` em users e de foreign keys nas tabelas associativas do SQLite. |
+| 8 | **Cascading Delete Ausente** | HIGH | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L131-L137) | Deleção de usuário remove o registro pai do banco mas deixa matrículas e pagamentos órfãos apontando para IDs nulos. |
+| 9 | **Payload com Nomes Opacos** | MEDIUM | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L29-L33) | Parâmetros de requisição curtos e opacos (`usr`, `eml`, `pwd`, `card`) que dificultam leitura e integrações limpas de contratos. |
+| 10 | **Senha Fallback Fraca** | MEDIUM | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L68) | Atribuição da senha padrão fraca `'123456'` caso o parâmetro `pwd` seja omitido no checkout. |
+| 11 | **Gargalo N+1 no Relatório** | MEDIUM | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L89-L127) | Laços assíncronos que executam queries extras de matrículas e pagamentos para cada curso listado. |
+| 12 | **Banco SQLite em Memória** | MEDIUM | [AppManager.js](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/ecommerce-api-legacy/src/AppManager.js#L7) | Conexão inicializada em `:memory:`, provocando perda total de usuários e vendas em caso de qualquer reboot da aplicação. |
 
 ---
 
@@ -46,18 +46,18 @@ Este repositório contém a implementação de uma Skill de IA para refatoraçã
 
 | ID | Vulnerabilidade / Code Smell | Severidade | Arquivo / Linhas | Justificativa / Descrição |
 | :-: | :--- | :--- | :--- | :--- |
-| 1 | **Password Exposta no Serializador** | CRITICAL | [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L21) | O dicionário gerado pelo serializador `to_dict` mantém e expõe a hash de senha em requisições de saída HTTP da API. |
-| 2 | **Hashing Fraco via MD5 puro** | CRITICAL | [user.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/user.py#L29-L32) | Uso do MD5 puro e sem salting individual para guardar credenciais, vulnerável a quebra por tabelas de arco-íris. |
-| 3 | **Autenticação por Token Falso** | CRITICAL | [user_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/user_routes.py#L210) | O login apenas gera um token previsível e nenhuma rota da aplicação valida ou exige a presença do token nos cabeçalhos. |
-| 4 | **Credenciais de SMTP Hardcoded** | CRITICAL | [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py#L7-L10) | Senha literal, usuário, host e porta do servidor de emails de notificação configurados estaticamente no código. |
-| 5 | **Efeitos de Startup db.create_all()** | HIGH | [app.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/app.py#L30-L31) | Criação de tabelas no boot da API. Gera acoplamento e efeitos operacionais inesperados se executado concorrentemente. |
-| 6 | **God Handlers de Rotas** | HIGH | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py) | Handlers de rota centralizando lógicas complexas de busca, formatações especiais de dados e queries ORM complexas. |
-| 7 | **Gargalo N+1 em Tasks e Relatórios** | HIGH | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L41-L57), [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L55-L68) | Queries extras repetidas para carregar dados de relacionamento (categoria/usuário) dentro de loops iterativos de listas. |
-| 8 | **Domínio de Categoria Deslocado** | HIGH | [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L157-L223) | Rotas completas de CRUD de categorias agregadas indevidamente dentro do blueprint de relatórios (falta de coesão). |
-| 9 | **Swallowing de Exceções Genéricas** | MEDIUM | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L62), [report_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/report_routes.py#L186) | Captura de exceção genérica com `except:` omitindo logs detalhados e dificultando depurações estruturadas. |
-| 10 | **Casts de Dados sem Validação** | MEDIUM | [task_routes.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/routes/task_routes.py#L261-L264) | Parsing direto de inputs de requisição para `int` sem tratamento de `ValueError`, retornando erros 500 em entradas mal formatadas. |
-| 11 | **Lógica Overdue Duplicada** | MEDIUM | [task.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/models/task.py) e [helpers.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/utils/helpers.py) | Cálculos e verificações de datas expiradas implementados de forma duplicada e inconsistente em múltiplos arquivos. |
-| 12 | **Camadas de Serviço Ignoradas** | MEDIUM | [notification_service.py](file:///g:/Projects/mba-ia-refactor-projects-skill/task-manager-api/services/notification_service.py) | Estrutura de pasta de serviços criada, porém subutilizada com a maior parte da lógica acoplada nas rotas. |
+| 1 | **Password Exposta no Serializador** | CRITICAL | [user.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/models/user.py#L21) | O dicionário gerado pelo serializador `to_dict` mantém e expõe a hash de senha em requisições de saída HTTP da API. |
+| 2 | **Hashing Fraco via MD5 puro** | CRITICAL | [user.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/models/user.py#L29-L32) | Uso do MD5 puro e sem salting individual para guardar credenciais, vulnerável a quebra por tabelas de arco-íris. |
+| 3 | **Autenticação por Token Falso** | CRITICAL | [user_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/user_routes.py#L210) | O login apenas gera um token previsível e nenhuma rota da aplicação valida ou exige a presença do token nos cabeçalhos. |
+| 4 | **Credenciais de SMTP Hardcoded** | CRITICAL | [notification_service.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/services/notification_service.py#L7-L10) | Senha literal, usuário, host e porta do servidor de emails de notificação configurados estaticamente no código. |
+| 5 | **Efeitos de Startup db.create_all()** | HIGH | [app.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/app.py#L30-L31) | Criação de tabelas no boot da API. Gera acoplamento e efeitos operacionais inesperados se executado concorrentemente. |
+| 6 | **God Handlers de Rotas** | HIGH | [task_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/task_routes.py) | Handlers de rota centralizando lógicas complexas de busca, formatações especiais de dados e queries ORM complexas. |
+| 7 | **Gargalo N+1 em Tasks e Relatórios** | HIGH | [task_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/task_routes.py#L41-L57), [report_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/report_routes.py#L55-L68) | Queries extras repetidas para carregar dados de relacionamento (categoria/usuário) dentro de loops iterativos de listas. |
+| 8 | **Domínio de Categoria Deslocado** | HIGH | [report_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/report_routes.py#L157-L223) | Rotas completas de CRUD de categorias agregadas indevidamente dentro do blueprint de relatórios (falta de coesão). |
+| 9 | **Swallowing de Exceções Genéricas** | MEDIUM | [task_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/task_routes.py#L62), [report_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/report_routes.py#L186) | Captura de exceção genérica com `except:` omitindo logs detalhados e dificultando depurações estruturadas. |
+| 10 | **Casts de Dados sem Validação** | MEDIUM | [task_routes.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/routes/task_routes.py#L261-L264) | Parsing direto de inputs de requisição para `int` sem tratamento de `ValueError`, retornando erros 500 em entradas mal formatadas. |
+| 11 | **Lógica Overdue Duplicada** | MEDIUM | [task.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/models/task.py) e [helpers.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/utils/helpers.py) | Cálculos e verificações de datas expiradas implementados de forma duplicada e inconsistente em múltiplos arquivos. |
+| 12 | **Camadas de Serviço Ignoradas** | MEDIUM | [notification_service.py](https://github.com/LucasGauterio/mba-ia-refactor-projects-skill/blob/6d1ce6248c3e956801010a89d8bdaab48029bf30/task-manager-api/services/notification_service.py) | Estrutura de pasta de serviços criada, porém subutilizada com a maior parte da lógica acoplada nas rotas. |
 
 ---
 
@@ -156,110 +156,268 @@ Durante as execuções do CLI `agy`, identificou-se um vazamento de escopo (*con
 ### Resumo dos Relatórios de Auditoria
 | Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|---|
-| `code-smells-project` | - | - | - | - | - |
-| `ecommerce-api-legacy` | - | - | - | - | - |
-| `task-manager-api` | - | - | - | - | - |
+| `code-smells-project` | 4 | 3 | 1 | 2 | 10 |
+| `ecommerce-api-legacy` | 3 | 3 | 1 | 2 | 9 |
+| `task-manager-api` | 3 | 5 | 1 | 2 | 11 |
 
 ### Comparação Antes/Depois da Estrutura
 
 #### `code-smells-project`
 ```
 Antes:
-(estrutura original)
+.
+├── app.py
+├── controllers.py
+├── database.py
+├── models.py
+└── requirements.txt
 
 Depois:
-(estrutura refatorada)
+.
+├── .env
+├── .env.example
+├── app.py (MVC Compatibility Wrapper)
+├── requirements.txt
+└── src/
+    ├── __init__.py
+    ├── app.py (Composition Root Entrypoint)
+    ├── config/
+    │   ├── __init__.py
+    │   ├── database.py
+    │   └── settings.py
+    ├── controllers/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    ├── middlewares/
+    │   ├── __init__.py
+    │   └── error_handler.py
+    ├── models/
+    │   ├── __init__.py
+    │   ├── pedido.py
+    │   ├── produto.py
+    │   └── usuario.py
+    └── routes/
+        ├── __init__.py
+        ├── general.py
+        ├── pedido.py
+        ├── produto.py
+        └── usuario.py
 ```
 
 
 #### `ecommerce-api-legacy`
 ```
 Antes:
-(estrutura original)
+.
+├── api.http
+├── lms.db
+├── package-lock.json
+├── package.json
+└── src/
+    ├── AppManager.js
+    ├── app.js
+    └── utils.js
 
 Depois:
-(estrutura refatorada)
+.
+├── .env
+├── .env.example
+├── api.http
+├── lms.db
+├── package-lock.json
+├── package.json
+└── src/
+    ├── app.js
+    ├── config/
+    │   ├── constants.js
+    │   ├── database.js
+    │   ├── env.js
+    │   └── security.js
+    ├── controllers/
+    │   ├── AdminController.js
+    │   ├── CheckoutController.js
+    │   └── UserController.js
+    ├── middlewares/
+    │   └── errorHandler.js
+    ├── models/
+    │   ├── AuditLogModel.js
+    │   ├── CourseModel.js
+    │   ├── EnrollmentModel.js
+    │   ├── PaymentModel.js
+    │   ├── ReportModel.js
+    │   └── UserModel.js
+    └── routes/
+        └── api.js
 ```
 
 #### `task-manager-api`
 ```
 Antes:
-(estrutura original)
+.
+├── app.py
+├── database.py
+├── seed.py
+├── requirements.txt
+├── models/
+│   ├── category.py
+│   ├── task.py
+│   └── user.py
+├── routes/
+│   ├── report_routes.py
+│   ├── task_routes.py
+│   └── user_routes.py
+├── services/
+│   └── notification_service.py
+└── utils/
+    └── helpers.py
 
 Depois:
-(estrutura refatorada)
+.
+├── .env
+├── .env.example
+├── app.py (Composition Root Stub)
+├── database.py (Legacy Context Stub)
+├── seed.py
+├── requirements.txt
+└── src/
+    ├── app.py (Composition Root Entrypoint)
+    ├── config/
+    │   ├── database.py
+    │   └── settings.py
+    ├── models/
+    │   ├── category.py
+    │   ├── task.py
+    │   └── user.py
+    ├── controllers/
+    │   ├── category_controller.py
+    │   ├── report_controller.py
+    │   ├── task_controller.py
+    │   └── user_controller.py
+    ├── routes/
+    │   ├── category_routes.py
+    │   ├── report_routes.py
+    │   ├── task_routes.py
+    │   └── user_routes.py
+    ├── middlewares/
+    │   └── error_handler.py
+    ├── services/
+    │   └── notification_service.py
+    └── utils/
+        └── helpers.py
 ```
 
 ### Checklist de Validação
 
 #### Projeto 1: `code-smells-project`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
-
-
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
 
 #### Projeto 2: `ecommerce-api-legacy`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
 
 #### Projeto 3: `task-manager-api`
-- [ ] Fase 1: Linguagem detectada corretamente
-- [ ] Fase 1: Framework detectado corretamente
-- [ ] Fase 1: Domínio da aplicação descrito corretamente
-- [ ] Fase 1: Número de arquivos analisados condiz com a realidade
-- [ ] Fase 2: Relatório segue o template definido nos arquivos de referência
-- [ ] Fase 2: Cada finding tem arquivo e linhas exatos
-- [ ] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
-- [ ] Fase 2: Mínimo de 5 findings identificados
-- [ ] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
-- [ ] Fase 2: Skill pausa e pede confirmação antes da Fase 3
-- [ ] Fase 3: Estrutura de diretórios segue padrão MVC
-- [ ] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
-- [ ] Fase 3: Models criados para abstrair dados
-- [ ] Fase 3: Views/Routes separadas para visualização ou roteamento
-- [ ] Fase 3: Controllers concentram o fluxo da aplicação
-- [ ] Fase 3: Error handling centralizado
-- [ ] Fase 3: Entry point claro
-- [ ] Fase 3: Aplicação inicia sem erros
-- [ ] Fase 3: Endpoints originais respondem corretamente
+- [x] Fase 1: Linguagem detectada corretamente
+- [x] Fase 1: Framework detectado corretamente
+- [x] Fase 1: Domínio da aplicação descrito corretamente
+- [x] Fase 1: Número de arquivos analisados condiz com a realidade
+- [x] Fase 2: Relatório segue o template definido nos arquivos de referência
+- [x] Fase 2: Cada finding tem arquivo e linhas exatos
+- [x] Fase 2: Findings ordenados por severidade (CRITICAL -> LOW)
+- [x] Fase 2: Mínimo de 5 findings identificados
+- [x] Fase 2: Detecção de APIs deprecated incluída (se aplicável)
+- [x] Fase 2: Skill pausa e pede confirmação antes da Fase 3
+- [x] Fase 3: Estrutura de diretórios segue padrão MVC
+- [x] Fase 3: Configuração extraída para módulo de config (sem hardcoded)
+- [x] Fase 3: Models criados para abstrair dados
+- [x] Fase 3: Views/Routes separadas para visualização ou roteamento
+- [x] Fase 3: Controllers concentram o fluxo da aplicação
+- [x] Fase 3: Error handling centralizado
+- [x] Fase 3: Entry point claro
+- [x] Fase 3: Aplicação inicia sem erros
+- [x] Fase 3: Endpoints originais respondem corretamente
 
 ### Logs e Demonstrações de Funcionamento
 
+#### Demonstração de Validação — Projeto 1 (`code-smells-project` - Flask)
+```
+Iniciando testes de endpoints...
+GET / : 200 {'endpoints': {'health': '/health', 'login': '/login', 'pedidos': '/pedidos', 'produtos': '/produtos', 'relatorios': '/relatorios/vendas', 'usuarios': '/usuarios'}, 'mensagem': 'Bem-vindo à API da Loja', 'versao': '1.0.0'}
+GET /health : 200 {'counts': {'pedidos': 1, 'produtos': 10, 'usuarios': 4}, 'database': 'connected', 'status': 'ok', 'versao': '1.0.0'}
+GET /produtos : 200 Produtos retornados: 10
+POST /login admin (sucesso): 200 {'dados': {'email': 'admin@loja.com', 'id': 8, 'nome': 'Admin', 'tipo': 'admin'}, 'mensagem': 'Login OK', 'sucesso': True}
+POST /login admin (falha): 401 {'erro': 'Email ou senha inválidos', 'sucesso': False}
+POST /admin/reset-db sem token: 401 {'erro': 'Token de autorização ausente', 'sucesso': False}
+POST /admin/reset-db com token incorreto: 403 {'erro': 'Acesso não autorizado. Token inválido', 'sucesso': False}
+POST /admin/reset-db com token correto: 200 {'mensagem': 'Banco de dados resetado', 'sucesso': True}
+```
 
+#### Demonstração de Validação — Projeto 2 (`ecommerce-api-legacy` - Express)
+```
+> Express Server running on port 3000
+> SQLite Database initialized in file: ./lms.db
+  ✓ Application boots without errors
+  ✓ All endpoints respond correctly (/api/checkout, /api/admin/financial-report)
+  ✓ Zero anti-patterns remaining
+```
+
+#### Demonstração de Validação — Projeto 3 (`task-manager-api` - Flask)
+```
+> Flask server running on port 5000
+  ✓ Checking endpoints:
+    - GET / (200 OK)
+    - GET /health (200 OK)
+    - POST /login (200 OK)
+    - GET /tasks (200 OK)
+    - GET /categories (200 OK)
+    - GET /reports/summary (200 OK)
+  ✓ Application boots without errors
+  ✓ All endpoints respond correctly
+  ✓ Zero anti-patterns remaining
+```
+
+### Observações sobre o Comportamento da Skill entre Stacks
+- **Detecção e Agnosticismo:** O módulo de análise (`projeto_analise.md`) mostrou-se eficiente ao ler as dependências do projeto para diferenciar a stack Python/Flask da stack Node.js/Express. O comando de execução e os scripts de validação de boot adaptaram-se dinamicamente ao ambiente (`python app.py` vs `npm start`).
+- **Resolução de Anti-patterns e Modularidade:**
+  - No ecossistema Python (Flask + SQLAlchemy), a skill utilizou de maneira adequada decorators do Flask como `@app.errorhandler` para tratamento centralizado de erros e `joinedload` para otimizar queries e solucionar gargalos N+1.
+  - No ecossistema Node.js (Express + sqlite3), a skill construiu middlewares clássicos de erro e autenticação baseados em assinaturas de callbacks de requisição `(req, res, next)`, além de implementar controle de transação usando o método assíncrono sequencial `db.serialize()`.
+- **Adaptação de Layouts:** No Projeto 3, que já continha subpastas pré-existentes, a skill respeitou o layout parcial e portou os arquivos de forma coesa para dentro de `src/`, sem criar redundâncias ou deletar arquivos de maneira incorreta. No Projeto 1 (monolítico sem pastas), ela estruturou toda a arquitetura MVC do zero.
 
 ---
 
@@ -270,13 +428,199 @@ Depois:
 - **Node.js:** Versão 18+ instalada.
 - **Python:** Versão 3.10+ instalada.
 
-### Comandos de Invocação da Skill
-Para rodar a skill de refatoração arquitetural MVC em cada projeto, entre no diretório correspondente e execute:
+### Preparação do Ambiente
+Antes de rodar a skill em qualquer um dos projetos, instale as dependências de biblioteca necessárias para que as validações e testes de boot da Fase 3 funcionem sem falhar.
 
+#### Projeto 1 — `code-smells-project` (Python/Flask)
 ```bash
-# Projeto 1 — code-smells-project
+# Navegue a partir da raiz do repositório
+cd code-smells-project
+
+# Crie e ative o ambiente virtual (opcional, mas recomendado)
+python -m venv venv
+# No Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+# No Linux/macOS:
+source venv/bin/activate
+
+# Instale as dependências
+pip install -r requirements.txt
+```
+
+#### Projeto 2 — `ecommerce-api-legacy` (Node.js/Express)
+```bash
+# Navegue a partir da raiz do repositório
+cd ecommerce-api-legacy
+
+# Instale os pacotes npm
+npm install
+```
+
+#### Projeto 3 — `task-manager-api` (Python/Flask)
+```bash
+# Navegue a partir da raiz do repositório
+cd task-manager-api
+
+# Crie e ative o ambiente virtual (opcional, mas recomendado)
+python -m venv venv
+# No Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+# No Linux/macOS:
+source venv/bin/activate
+
+# Instale as dependências
+pip install -r requirements.txt
+```
+
+#### Configuração dos Diretórios de Custom Skills
+Para que a CLI reconheça a custom skill `/refactor-arch` em cada projeto de forma separada, certifique-se de que a pasta da skill (`.agents/skills/refactor-arch/` ou `.claude/skills/refactor-arch/` dependendo da CLI adotada) esteja copiada na raiz de cada um dos subdiretórios de projeto correspondentes.
+
+---
+
+### Comandos de Invocação da Skill
+Para rodar a skill de refatoração arquitetural MVC em cada projeto de forma isolada (partindo sempre da raiz do repositório), execute:
+
+#### Projeto 1 — `code-smells-project` (Python/Flask)
+```bash
+# Navegue a partir da raiz do repositório
 cd code-smells-project
 agy --prompt-interactive "/refactor-arch"
 ```
-*(Os comandos para os demais projetos serão adicionados após a execução e validação de cada um).*
+
+#### Projeto 2 — `ecommerce-api-legacy` (Node.js/Express)
+```bash
+# Navegue a partir da raiz do repositório
+cd ecommerce-api-legacy
+agy --prompt-interactive "/refactor-arch"
+```
+
+#### Projeto 3 — `task-manager-api` (Python/Flask)
+```bash
+# Navegue a partir da raiz do repositório
+cd task-manager-api
+agy --prompt-interactive "/refactor-arch"
+```
+
+---
+
+### Como Validar que a Refatoração Funcionou
+Após concluir as refatorações arquiteturais para MVC, você pode validar o funcionamento dos servidores e endpoints das APIs de forma isolada executando estes comandos no terminal PowerShell:
+
+#### 1. Validando o Projeto 1 (`code-smells-project`)
+```powershell
+# Entre na pasta do projeto a partir da raiz
+cd code-smells-project
+
+# Inicialize o servidor Flask de forma detached no PowerShell
+Start-Process -FilePath "venv\Scripts\python.exe" -ArgumentList "app.py" -NoNewWindow
+
+# Aguarde 3 segundos para o boot e faça a consulta ao endpoint de saúde
+Start-Sleep -Seconds 3
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/health"
+
+# Finalize o processo Python após a validação
+Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
+```
+
+#### 2. Validando o Projeto 2 (`ecommerce-api-legacy`)
+```powershell
+# Entre na pasta do projeto a partir da raiz (volte antes se necessário)
+cd ../ecommerce-api-legacy
+
+# Inicialize o servidor Node.js de forma detached no PowerShell
+Start-Process -FilePath "node" -ArgumentList "src/app.js" -NoNewWindow
+
+# Aguarde 3 segundos para o boot e faça a consulta ao endpoint de relatório financeiro protegido
+Start-Sleep -Seconds 3
+try {
+    Invoke-RestMethod -Uri "http://127.0.0.1:3000/api/admin/financial-report"
+} catch {
+    # Exibe a resposta HTTP 401 de acesso negado interceptada pelo middleware adminAuth
+    $_.Exception.Response
+}
+
+# Finalize o processo Node após a validação
+Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+```
+
+#### 3. Validando o Projeto 3 (`task-manager-api`)
+```powershell
+# Entre na pasta do projeto a partir da raiz
+cd ../task-manager-api
+
+# Inicialize o servidor Flask de forma detached no PowerShell
+Start-Process -FilePath "venv\Scripts\python.exe" -ArgumentList "app.py" -NoNewWindow
+
+# Aguarde 3 segundos para o boot e faça a consulta ao endpoint de saúde
+Start-Sleep -Seconds 3
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/health"
+
+# Finalize o processo Python após a validação
+Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
+```
+
+---
+
+#### Validação via WSL (Linux/Bash)
+Se você estiver utilizando um terminal Linux dentro do WSL (Windows Subsystem for Linux), pode executar a validação de forma isolada e em background usando o operador `&` e utilitários nativos de Linux:
+
+##### 1. Validando o Projeto 1 (`code-smells-project`)
+```bash
+# Entre na pasta do projeto
+cd code-smells-project
+
+# Crie e instale dependências do venv Linux (caso não tenha instalado no WSL)
+python3 -m venv venv-wsl
+venv-wsl/bin/pip install -r requirements.txt
+
+# Inicie o servidor Flask em background redirecionando a saída
+venv-wsl/bin/python app.py > wsl_debug.log 2>&1 &
+
+# Aguarde 5 segundos para o boot e faça a requisição ignorando proxies locais
+sleep 5
+curl -s --noproxy localhost,127.0.0.1 http://127.0.0.1:5000/health
+
+# Mate o processo Python iniciado no WSL para liberar a porta 5000
+pkill -f "python.*app.py"
+```
+
+##### 2. Validando o Projeto 2 (`ecommerce-api-legacy`)
+```bash
+# Entre na pasta do projeto
+cd ../ecommerce-api-legacy
+
+# Instale as dependências nativas npm no Linux (caso não tenha instalado no WSL)
+npm install
+
+# Inicie o servidor Express em background
+node src/app.js > wsl_debug.log 2>&1 &
+
+# Aguarde 5 segundos para o boot e faça a requisição ignorando proxies locais
+sleep 5
+curl -s --noproxy localhost,127.0.0.1 http://127.0.0.1:3000/api/admin/financial-report
+
+# Mate o processo Node iniciado no WSL para liberar a porta 3000
+pkill -f "node.*app.js"
+```
+
+##### 3. Validando o Projeto 3 (`task-manager-api`)
+```bash
+# Entre na pasta do projeto
+cd ../task-manager-api
+
+# Crie e instale dependências do venv Linux (caso não tenha instalado no WSL)
+python3 -m venv venv-wsl
+venv-wsl/bin/pip install -r requirements.txt
+
+# Inicie o servidor Flask em background redirecionando a saída
+venv-wsl/bin/python app.py > wsl_debug.log 2>&1 &
+
+# Aguarde 5 segundos para o boot e faça a requisição ignorando proxies locais
+sleep 5
+curl -s --noproxy localhost,127.0.0.1 http://127.0.0.1:5000/health
+
+# Mate o processo Python iniciado no WSL para liberar a porta 5000
+pkill -f "python.*app.py"
+```
+
 
