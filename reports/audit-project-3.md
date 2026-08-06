@@ -5,82 +5,75 @@ Stack:   Python + Flask
 Arquivos: 11 | ~1163 linhas estimadas
 
 ## Resumo
-CRITICAL: 3 | HIGH: 5 | MEDIUM: 1 | LOW: 2
+CRITICAL: 3 | HIGH: 3 | MEDIUM: 2 | LOW: 2
 
 ## Achados
 
-### [CRITICAL] Insecure / Custom Cryptography
+### [CRITICAL] Criptografia Insegura (Insecure Cryptography)
 - **Arquivo:** [models/user.py](../task-manager-api/models/user.py#L29-L32)
-- **Descrição:** Uso de hash MD5 sem salt para armazenar e comparar senhas de usuários (`hashlib.md5(pwd.encode()).hexdigest()`).
-- **Impacto:** Vulnerabilidade severa. Senhas são facilmente decifradas por ataques de força bruta ou tabelas rainbow se a base de dados for comprometida.
-- **Recomendação:** Utilizar algoritmos de hash seguros com salt aleatório por padrão (ex: `pbkdf2` via `werkzeug.security.generate_password_hash` e `check_password_hash`).
+- **Descrição:** O armazenamento de senhas dos usuários é realizado utilizando hash MD5 puro sem salt (`hashlib.md5(pwd.encode()).hexdigest()`), que é um algoritmo legado e criptograficamente quebrado.
+- **Impacto:** Em caso de vazamento ou exposição da base de dados, as senhas dos usuários podem ser facilmente decifradas por ataques de dicionário ou tabelas rainbow.
+- **Recomendação:** Substituir o algoritmo de hashing MD5 pela função segura PBKDF2 com salt, utilizando `generate_password_hash` e `check_password_hash` fornecidas nativamente pelo pacote `werkzeug.security`.
 
-### [CRITICAL] Auth Illusion / Fake Security Tokens
-- **Arquivo:** [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L210)
-- **Descrição:** Retorno de um token de autenticação estático e sem criptografia real/assinatura (`fake-jwt-token-` + user ID). Além disso, não há mecanismos de validação ou middlewares que barrem o acesso de rotas sensíveis a usuários não autenticados.
-- **Impacto:** Qualquer usuário pode forjar um token ou acessar as rotas restritas sem validação real, comprometendo a integridade da aplicação.
-- **Recomendação:** Substituir o token falso por autenticação JWT real (assinada criptograficamente) e criar um decorator/middleware de autenticação para validar os tokens nas rotas sensíveis.
+### [CRITICAL] Ilusão de Autenticação / Tokens Falsos (Auth Illusion / Fake Security Tokens)
+- **Arquivo:** [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L207-L210)
+- **Descrição:** O endpoint `/login` gera um token estático sem assinatura real ou criptografia no formato `fake-jwt-token-` concatenado ao ID do usuário. Além disso, as rotas críticas de gerenciamento de tarefas, categorias e relatórios não realizam nenhuma validação ou checagem de autorização/autenticação.
+- **Impacto:** Ausência de controle de acesso real. Qualquer requisição HTTP pode acessar ou modificar tarefas e dados sensíveis de qualquer usuário simplesmente informando IDs, sem que haja validação de autenticação ou propriedade dos recursos.
+- **Recomendação:** Implementar um middleware/decorator de autenticação (`token_required`) que valide tokens criptograficamente assinados (como JWT ou serialização segura do `itsdangerous`) e aplicá-lo em todas as rotas sensíveis do sistema.
 
-### [CRITICAL] Hardcoded Secrets & Info Leakage
+### [CRITICAL] Segredos Chumbados no Código (Hardcoded Secrets)
 - **Arquivo:** [app.py](../task-manager-api/app.py#L13) e [services/notification_service.py](../task-manager-api/services/notification_service.py#L9-L10)
-- **Descrição:** Chave secreta da aplicação (`SECRET_KEY`) e credenciais de e-mail (usuário e senha do SMTP da conta `taskmanager@gmail.com`) salvas diretamente no código de inicialização.
-- **Impacto:** Vazamento de informações e segredos confidenciais em repositórios Git, facilitando o comprometimento de servidores e contas de e-mail.
-- **Recomendação:** Extrair os segredos para variáveis de ambiente usando o `python-dotenv` e buscar essas variáveis via `os.getenv()`.
+- **Descrição:** A chave secreta da aplicação (`SECRET_KEY = 'super-secret-key-123'`) e as credenciais SMTP do serviço de e-mail (`email_user = 'taskmanager@gmail.com'`, `email_password = 'senha123'`) estão declaradas e expostas de forma estática diretamente nos arquivos de código-fonte.
+- **Impacto:** Vulnerabilidade grave de segurança. Qualquer pessoa com acesso ao repositório de código terá acesso às credenciais de e-mail do sistema e poderá comprometer a assinatura e integridade de sessões.
+- **Recomendação:** Externalizar todos os segredos para variáveis de ambiente usando o pacote `python-dotenv` e criar um arquivo `.env` baseado no modelo existente `.env.example`.
 
 ---
 
-### [HIGH] The Blob / God Class
-- **Arquivo:** [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L1), [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L1) e [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L1)
-- **Descrição:** Os arquivos de rotas concentram lógica de roteamento HTTP, validações de formato e dados, lógica de negócio (ex: cálculo de atraso de tarefa, hashes de senha) e manipulação direta de banco de dados (`db.session.commit()`).
-- **Impacto:** Código acoplado, difícil de manter, testar de forma isolada ou reutilizar.
-- **Recomendação:** Refatorar as rotas para o padrão MVC, transferindo a lógica de orquestração e negócio para os *Controllers* e a lógica de persistência e regras intrínsecas aos dados para os *Models*.
+### [HIGH] Gargalo de Performance de Consultas N+1 (Query N+1 Performance Bottleneck)
+- **Arquivo:** [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L41-L58) e [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L55-L68)
+- **Descrição:**
+  1. Ao listar tarefas no endpoint `/tasks`, o sistema executa uma nova consulta no banco de dados para buscar o usuário correspondente (`User.query.get(t.user_id)`) e a categoria (`Category.query.get(t.category_id)`) para cada tarefa individual em um loop.
+  2. No relatório consolidado (`/reports/summary`), o sistema executa uma consulta de busca de tarefas para cada usuário cadastrado para compilar estatísticas.
+  3. Ao listar as categorias (`/categories`), o código executa uma query de contagem de tarefas para cada categoria retornada.
+- **Impacto:** Degradação severa e exponencial da latência e da performance da API à medida que o número de tarefas e usuários cresce na base de dados, gerando centenas ou milhares de requisições desnecessárias ao banco de dados.
+- **Recomendação:** Otimizar o carregamento das relações utilizando JOINs adequados (`joinedload` do SQLAlchemy) na consulta principal de tarefas, permitindo obter as informações em uma única query (Eager Loading). Para relatórios e contagens, realizar queries agregadoras agrupadas com SQL (`db.func.count`).
 
-### [HIGH] Query N+1 Performance Bottleneck
-- **Arquivo:** [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L41-L58), [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L55-L68), [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L163) e [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L22)
-- **Descrição:** 
-  - Em `get_tasks` de `task_routes.py`, realiza-se `User.query.get(t.user_id)` e `Category.query.get(t.category_id)` em um laço de repetição para cada tarefa.
-  - Em `summary_report` de `report_routes.py`, faz `Task.query.filter_by(user_id=u.id).all()` para cada usuário.
-  - Em `get_categories` de `report_routes.py`, executa-se uma query `count` de tarefas por categoria em um loop.
-  - Em `get_users` de `user_routes.py`, lê-se a relação `u.tasks` em loop.
-- **Impacto:** Execução desnecessária de centenas ou milhares de queries sequenciais (latência e carga excessiva no banco de dados).
-- **Recomendação:** Utilizar técnicas de carregamento otimizado (Eager Loading) com `joinedload` ou efetuar consultas com `JOIN` agrupado para trazer todos os dados correlacionados em uma única query.
+### [HIGH] Falha de Integridade Referencial na Exclusão (Referential Integrity Failure)
+- **Arquivo:** [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L211-L223)
+- **Descrição:** A rota de exclusão de categoria (`/categories/<int:cat_id>`) remove o registro da categoria do banco de dados sem gerenciar as tarefas associadas a ela ou garantir que chaves estrangeiras não fiquem órfãs na tabela de tarefas.
+- **Impacto:** Risco de corrupção ou inconsistência referencial no banco de dados, deixando tarefas com o campo `category_id` apontando para chaves que não existem mais.
+- **Recomendação:** Adicionar restrições de integridade referencial ou gerenciar explicitamente a desassociação (definindo `category_id = None`) das tarefas associadas antes de efetivar a remoção da categoria no banco de dados.
 
-### [HIGH] Stovepipe System / Lack of Cohesive Domains
-- **Arquivo:** [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L157-L223)
-- **Descrição:** Definição das rotas CRUD de categorias (`/categories`) inseridas dentro do domínio de relatórios (`report_routes.py`).
-- **Impacto:** Confusão de domínios, dificultando a localização e manutenção de código de categorias.
-- **Recomendação:** Separar as rotas de categoria para um Blueprint/arquivo próprio (`routes/category_routes.py`) e seu respectivo controlador (`controllers/category_controller.py`).
-
-### [HIGH] Accidental Complexity / Startup Side-Effects
+### [HIGH] Efeitos Colaterais no Startup da Aplicação (Accidental Complexity / Startup Side-Effects)
 - **Arquivo:** [app.py](../task-manager-api/app.py#L30-L31)
-- **Descrição:** Execução de `db.create_all()` diretamente na inicialização do servidor ao importar o módulo da aplicação.
-- **Impacto:** Risco operacional em ambientes de produção onde o esquema deve ser gerenciado por migrations (ex: Flask-Migrate/Alembic) e pode causar lentidão na inicialização da aplicação em ambiente de múltiplos workers.
-- **Recomendação:** Remover o `db.create_all()` do startup automático da aplicação e usar um comando ou script separado para inicializar a estrutura do banco de dados (ex: no `seed.py`).
-
-### [HIGH] Referential Integrity Failure / Cascade Deleter
-- **Arquivo:** [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L140-L142)
-- **Descrição:** Exclusão manual de tarefas de um usuário feita em um laço no nível de rota (`delete_user`).
-- **Impacto:** Acoplamento de rotas e risco de integridade se tarefas forem adicionadas e órfãs se a exclusão manual falhar ou se novas relações com usuário forem estabelecidas no futuro.
-- **Recomendação:** Configurar o relacionamento no Model do SQLAlchemy para propagar a deleção automaticamente (`cascade="all, delete-orphan"` no Model `User`).
+- **Descrição:** O script executa de forma síncrona `db.create_all()` a cada inicialização (boot) do servidor web no arquivo de entrada da aplicação.
+- **Impacto:** Lentidão na inicialização da aplicação e riscos operacionais em ambientes de produção de alteração/bloqueio indesejado de esquemas de banco de dados ativos.
+- **Recomendação:** Remover `db.create_all()` do arquivo de execução principal (`app.py`), delegando a criação inicial a scripts dedicados de migração de banco de dados ou ferramentas como Alembic.
 
 ---
 
-### [MEDIUM] Cover Your Assets / Generic Exception Swallowing
-- **Arquivo:** [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L62), [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L130) e [routes/report_routes.py](../task-manager-api/routes/report_routes.py#L186)
-- **Descrição:** Blocos `except:` genéricos sem especificação do erro e que silenciam a exceção, retornando apenas mensagens como `{"error": "Erro interno"}` ou `{"error": "Erro ao atualizar"}` sem fazer qualquer log do erro real.
-- **Impacto:** Dificuldade extrema para depurar bugs e monitorar erros do sistema em produção.
-- **Recomendação:** Capturar exceções mais específicas ou, nos blocos genéricos, logar o traceback completo do erro no console/serviço de logging antes de responder ao cliente, ou tratar globalmente via middleware.
+### [MEDIUM] Falta de Camada de Controle e Lógica de Negócios Acoplada (God Class / Lack of separation)
+- **Arquivo:** [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L10-L211) e [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L11-L299)
+- **Descrição:** Toda a lógica de negócios, controle de fluxo, validações de entrada e tratamento de resposta HTTP está misturada e implementada diretamente nas rotas, mantendo a pasta `controllers/` vazia.
+- **Impacto:** Código acoplado e de baixa manutenibilidade, dificultando a implementação de testes unitários isolados da camada HTTP.
+- **Recomendação:** Separar adequadamente as responsabilidades movendo a lógica de tratamento e negócio das rotas para controladores específicos na pasta `src/controllers/`, deixando os arquivos de rotas responsáveis apenas por mapear endpoints HTTP e validações de tipos básicos.
+
+### [MEDIUM] Captura Silenciosa e Genérica de Exceções (Cover Your Assets)
+- **Arquivo:** [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L62) e [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L130)
+- **Descrição:** Uso excessivo de capturas de exceções totalmente genéricas (`except:`) que ocultam a causa original do erro e retornam apenas mensagens de erro genéricas como `{"error": "Erro interno"}`.
+- **Impacto:** Dificulta a depuração e monitoração de falhas em produção (deixando a equipe de desenvolvimento cega sobre bugs silenciosos ou problemas de conexão no banco).
+- **Recomendação:** Capturar exceções de forma granular e implementar um Error Handler centralizado (Middleware/Decorator) que loge a pilha de erros internamente e responda com mensagens HTTP apropriadas.
 
 ---
 
-### [LOW] Inline Domain Constants / Magic Strings
+### [LOW] Uso de Valores Literais Chumbados (Magic Strings)
 - **Arquivo:** [routes/user_routes.py](../task-manager-api/routes/user_routes.py#L71) e [routes/task_routes.py](../task-manager-api/routes/task_routes.py#L110)
-- **Descrição:** Strings mágicas inseridas diretamente no código para validação de status de tarefas (`['pending', 'in_progress', 'done', 'cancelled']`) e perfis de usuário (`['user', 'admin', 'manager']`).
-- **Impacto:** Dificuldade de manutenção e aumento da possibilidade de bugs de digitação inconsistente em diferentes pontos do projeto.
-- **Recomendação:** Centralizar estes valores em constantes globais no arquivo de configurações da aplicação (ex: em `src/config/settings.py` ou `src/config/constants.py`).
+- **Descrição:** Regras de negócio e validações baseiam-se em valores de string chumbados diretamente no código (ex: roles de usuário `'user'`, `'admin'`, `'manager'` e status de tarefas `'pending'`, `'in_progress'`, `'done'`, `'cancelled'`).
+- **Impacto:** Alto risco de bugs por pequenos erros de digitação e acoplamento desnecessário na manutenção ou adição de novas categorias/status.
+- **Recomendação:** Centralizar as constantes e tipos válidos em um arquivo de configuração centralizado (ex: `src/config/constants.py`) ou declará-las como constantes estáticas nos próprios Models correspondentes.
 
-### [LOW] Hardcoded Port / Configuration Fallback
+### [LOW] Porta e Modo de Depuração Hardcoded (Hardcoded Port)
 - **Arquivo:** [app.py](../task-manager-api/app.py#L34)
-- **Descrição:** Configuração de porta `5000` e modo `debug=True` fixos no bootstrap da aplicação.
-- **Impacto:** Restringe a portabilidade do aplicativo em ambientes de nuvem ou conteinerização onde a porta TCP deve ser configurada externamente.
-- **Recomendação:** Carregar a porta e o modo de depuração de variáveis de ambiente (`PORT` e `FLASK_DEBUG`) com fallbacks seguros.
+- **Descrição:** O bootstrap da aplicação define a porta `5000` e o modo de depuração `debug=True` de forma fixa diretamente no código.
+- **Impacto:** Limita a flexibilidade de implantação em diferentes ambientes de nuvem ou em contêineres Docker que necessitam de parametrização dinâmica de portas.
+- **Recomendação:** Alterar para ler as configurações de porta e modo de debug a partir de variáveis de ambiente com fallbacks adequados.

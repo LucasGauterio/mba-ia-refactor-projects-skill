@@ -156,9 +156,9 @@ Durante as execuções do CLI `agy`, identificou-se um vazamento de escopo (*con
 ### Resumo dos Relatórios de Auditoria
 | Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|---|
-| `code-smells-project` | 4 | 3 | 1 | 2 | 10 |
-| `ecommerce-api-legacy` | 3 | 3 | 1 | 2 | 9 |
-| `task-manager-api` | 3 | 5 | 1 | 2 | 11 |
+| `code-smells-project` | 4 | 4 | 1 | 2 | 11 |
+| `ecommerce-api-legacy` | 3 | 5 | 0 | 2 | 10 |
+| `task-manager-api` | 3 | 3 | 2 | 2 | 10 |
 
 ### Comparação Antes/Depois da Estrutura
 
@@ -377,39 +377,66 @@ Depois:
 
 #### Demonstração de Validação — Projeto 1 (`code-smells-project` - Flask)
 ```
-Iniciando testes de endpoints...
-GET / : 200 {'endpoints': {'health': '/health', 'login': '/login', 'pedidos': '/pedidos', 'produtos': '/produtos', 'relatorios': '/relatorios/vendas', 'usuarios': '/usuarios'}, 'mensagem': 'Bem-vindo à API da Loja', 'versao': '1.0.0'}
-GET /health : 200 {'counts': {'pedidos': 1, 'produtos': 10, 'usuarios': 4}, 'database': 'connected', 'status': 'ok', 'versao': '1.0.0'}
-GET /produtos : 200 Produtos retornados: 10
-POST /login admin (sucesso): 200 {'dados': {'email': 'admin@loja.com', 'id': 8, 'nome': 'Admin', 'tipo': 'admin'}, 'mensagem': 'Login OK', 'sucesso': True}
-POST /login admin (falha): 401 {'erro': 'Email ou senha inválidos', 'sucesso': False}
-POST /admin/reset-db sem token: 401 {'erro': 'Token de autorização ausente', 'sucesso': False}
-POST /admin/reset-db com token incorreto: 403 {'erro': 'Acesso não autorizado. Token inválido', 'sucesso': False}
-POST /admin/reset-db com token correto: 200 {'mensagem': 'Banco de dados resetado', 'sucesso': True}
+Iniciando bateria de testes com o Flask test_client...
+  ✓ [Teste 1] GET / (200 OK)
+  ✓ [Teste 2] GET /health (200 OK - Sem vazamento de segredos)
+  ✓ [Teste 3] GET /produtos (200 OK - 10 produtos retornados)
+  ✓ [Teste 4] POST /login (Sucesso - 200 OK com dados de login)
+  ✓ [Teste 5] POST /login (Falha - 401 Unauthorized com credenciais incorretas)
+  ✓ [Teste 6] POST /admin/reset-db (Sem Token - 401 Unauthorized)
+  ✓ [Teste 7] POST /admin/reset-db (Token Inválido - 403 Forbidden)
+  ✓ [Teste 8] GET /relatorios/vendas (Sem Token - 401 Unauthorized)
+  ✓ [Teste 9] GET /relatorios/vendas (Token Válido - 200 OK)
+  ✓ [Teste 10] POST /pedidos (Fluxo Transacional - 201 Created com estoque atualizado)
+  ✓ [Teste 11] POST /pedidos (Falha de Estoque / Transação - 400 Bad Request e rollback de estoque)
+  ✓ [Teste 12] POST /admin/reset-db (Token Válido - 200 OK com banco resetado)
+Bateria de testes finalizada com SUCESSO total!
 ```
 
 #### Demonstração de Validação — Projeto 2 (`ecommerce-api-legacy` - Express)
 ```
-> Express Server running on port 3000
-> SQLite Database initialized in file: ./lms.db
-  ✓ Application boots without errors
-  ✓ All endpoints respond correctly (/api/checkout, /api/admin/financial-report)
-  ✓ Zero anti-patterns remaining
+[Teste 1] GET /api/checkout - Sem parâmetros...
+  ✓ Passou (Retornou 400)
+[Teste 2] POST /api/checkout - Curso não encontrado...
+  ✓ Passou (Retornou 404)
+[Teste 3] POST /api/checkout - Sucesso (Criar novo usuário e matricular)...
+  ✓ Passou (Retornou 200 com msg e enrollment_id)
+[Teste 4] POST /api/checkout - Sucesso (Usuário Leonan que já existe)...
+  ✓ Passou (Retornou 200 com msg e enrollment_id)
+[Teste 5] GET /api/admin/financial-report - Sem Token de Autorização...
+  ✓ Passou (Retornou 401 com erro esperado)
+[Teste 6] GET /api/admin/financial-report - Com Token Inválido...
+  ✓ Passou (Retornou 403 com erro esperado)
+[Teste 7] GET /api/admin/financial-report - Com Token Correto...
+  ✓ Passou (Retornou 200 com faturamento consolidado por LEFT JOIN)
+[Teste 8] DELETE /api/users/1 - Sem Token de Autorização...
+  ✓ Passou (Retornou 401 com erro esperado)
+[Teste 9] DELETE /api/users/1 - Com Token Correto (Deleção em Cascata)...
+  ✓ Passou (Retornou 200 com remoção e PRAGMA foreign_keys ativa)
+[Teste 10] GET /api/admin/financial-report - Relatório Pós-Deleção...
+  ✓ Passou (Relatório gerado sem erros pós-deleção)
+STATUS FINAL: TODOS OS TESTES PASSARAM COM SUCESSO! (100% OK)
 ```
 
 #### Demonstração de Validação — Projeto 3 (`task-manager-api` - Flask)
 ```
-> Flask server running on port 5000
-  ✓ Checking endpoints:
-    - GET / (200 OK)
-    - GET /health (200 OK)
-    - POST /login (200 OK)
-    - GET /tasks (200 OK)
-    - GET /categories (200 OK)
-    - GET /reports/summary (200 OK)
-  ✓ Application boots without errors
-  ✓ All endpoints respond correctly
-  ✓ Zero anti-patterns remaining
+1. Testing root...
+  ✓ 200 OK {"message": "Task Manager API", "version": "1.0"}
+2. Testing health...
+  ✓ 200 OK {"status": "ok", "timestamp": "2026-08-06 10:14:32"}
+3. Testing login...
+  ✓ 200 OK {"message": "Login realizado com sucesso", "token": "eyJ1c2VyX2lk..."} (Token Criptográfico Assinado)
+4. Testing get users...
+  ✓ 200 OK (3 usuários retornados)
+5. Testing get tasks...
+  ✓ 200 OK (10 tarefas retornadas com Eager Loading de Usuário/Categoria)
+6. Testing get categories...
+  ✓ 200 OK (4 categorias retornadas com contagem agregada de tarefas)
+7. Testing summary report...
+  ✓ 200 OK (Consolidação de produtividade de usuários, prioridades e overdue)
+8. Testing user report for João (ID 1)...
+  ✓ 200 OK (Filtros de privacidade aplicados)
+All basic verification tests passed successfully!
 ```
 
 ### Observações sobre o Comportamento da Skill entre Stacks

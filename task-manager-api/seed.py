@@ -1,13 +1,17 @@
 """Script para popular o banco com dados iniciais"""
-from app import app, db
-from models.task import Task
-from models.user import User
-from models.category import Category
+from src.app import app
+from src.config.database import db
+from src.models.task import Task
+from src.models.user import User
+from src.models.category import Category
 from datetime import datetime, timedelta
 
 def seed_data():
     with app.app_context():
+        # Cria as tabelas se elas não existirem (Removido do startup da aplicação)
+        db.create_all()
 
+        # Limpa dados existentes
         Task.query.delete()
         User.query.delete()
         Category.query.delete()
