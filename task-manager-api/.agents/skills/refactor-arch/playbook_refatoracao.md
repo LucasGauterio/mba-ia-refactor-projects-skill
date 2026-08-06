@@ -350,3 +350,84 @@ app.listen(PORT, () => {
 });
 ```
 
+---
+
+## 13. Autenticação e Autorização baseada em Token (JWT/Assinatura)
+
+Para rotas que exigem autenticação de usuário ou controle de acesso específico para administradores, utilize middlewares ou decorators que validem os tokens Bearer enviados no cabeçalho `Authorization`.
+
+### Exemplo (Python/Flask)
+Crie um decorator em `src/middlewares/auth.py` para validar o token gerado (como um token do `itsdangerous` ou um JWT):
+```python
+from flask import request, jsonify, g
+from functools import wraps
+from itsdangerous import URLSafeTimedSerializer
+from src.config.settings import SECRET_KEY
+from src.models.user import User
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'error': 'Token de autorização ausente'}), 401
+        
+        try:
+            token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+            serializer = URLSafeTimedSerializer(SECRET_KEY)
+            data = serializer.loads(token, salt='auth-token', max_age=86400) # Exemplo com validade de 24h
+            user_id = data.get('user_id')
+        except Exception:
+            return jsonify({'error': 'Token inválido ou expirado'}), 401
+
+        current_user = User.query.get(user_id)
+        if not current_user or not current_user.active:
+            return jsonify({'error': 'Usuário não encontrado ou inativo'}), 401
+
+        g.current_user = current_user
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not hasattr(g, 'current_user') or g.current_user.role not in ['admin', 'manager']:
+            return jsonify({'error': 'Acesso exclusivo a administradores ou gerentes'}), 403
+        return f(*args, **kwargs)
+    return decorated
+```
+
+Aplique no registro de rotas em `src/routes/`:
+```python
+from src.middlewares.auth import token_required
+task_bp.route('/tasks', methods=['GET'])(token_required(task_controller.get_tasks))
+```
+
+### Exemplo (Node.js/Express)
+Crie um middleware em `src/middlewares/auth.js` para validar tokens:
+```javascript
+const settings = require('../config/settings');
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: "Token de autorização ausente" });
+    }
+
+    // Exemplo de validação contra o ADMIN_TOKEN
+    if (token !== settings.adminToken) {
+        return res.status(403).json({ error: "Token inválido ou sem permissão" });
+    }
+    next();
+}
+```
+
+E registre na definição das rotas:
+```javascript
+const authenticateToken = require('../middlewares/auth');
+router.get('/financial-report', authenticateToken, adminController.getFinancialReport);
+```
+
+

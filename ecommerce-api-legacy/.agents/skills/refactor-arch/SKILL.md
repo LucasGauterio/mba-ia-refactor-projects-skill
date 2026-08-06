@@ -87,7 +87,11 @@ Se o usuário aprovar, aplique a refatoração automática seguindo o padrão MV
 3. **Validação e Boot:**
    - Garanta que a aplicação suba/inicie sem erros.
    - Garanta que todos os endpoints HTTP originais respondam com os mesmos caminhos de rotas e formatos JSON esperados pelos clientes, assegurando retrocompatibilidade absoluta.
-4. Imprima no console o resumo formatado:
+4. **Verificação de Cobertura de Segurança (Pós-Auditoria):**
+   - Após concluir a refatoração, faça uma revisão final rigorosa para garantir que todos os problemas identificados no Relatório de Auditoria da Fase 2 (especialmente os `CRITICAL` e `HIGH`) foram de fato resolvidos.
+   - Garanta ativamente que qualquer mecanismo de autenticação adicionado (como a geração de tokens na rota de login) possua seus middlewares/decorators correspondentes ativados e aplicados a **todas as rotas sensíveis** (tarefas, relatórios, usuários, exclusões, etc.).
+   - Mapeie a cobertura para garantir que nenhum endpoint sensível foi deixado exposto publicamente sem autorização ou validação de escopo/propriedade.
+5. Imprima no console o resumo formatado:
 ```
 ================================
 PHASE 3: REFACTORING COMPLETE
@@ -95,9 +99,14 @@ PHASE 3: REFACTORING COMPLETE
 ## New Project Structure
 <Nova árvore de diretórios>
 
+## Security Coverage Verification
+  [ ] Achado 1 (<Descrição do achado>): <Como foi corrigido no MVC>
+  [ ] Achado 2 (<Descrição do achado>): <Como foi corrigido no MVC>
+  ...
+
 ## Validation
   ✓ Application boots without errors
   ✓ All endpoints respond correctly
-  ✓ Zero anti-patterns remaining
+  ✓ Verification of all security findings completed (Zero vulnerabilities remaining)
 ================================
 ```

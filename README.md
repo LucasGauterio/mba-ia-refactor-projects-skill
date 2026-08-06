@@ -418,6 +418,9 @@ POST /admin/reset-db com token correto: 200 {'mensagem': 'Banco de dados resetad
   - No ecossistema Python (Flask + SQLAlchemy), a skill utilizou de maneira adequada decorators do Flask como `@app.errorhandler` para tratamento centralizado de erros e `joinedload` para otimizar queries e solucionar gargalos N+1.
   - No ecossistema Node.js (Express + sqlite3), a skill construiu middlewares clássicos de erro e autenticação baseados em assinaturas de callbacks de requisição `(req, res, next)`, além de implementar controle de transação usando o método assíncrono sequencial `db.serialize()`.
 - **Adaptação de Layouts:** No Projeto 3, que já continha subpastas pré-existentes, a skill respeitou o layout parcial e portou os arquivos de forma coesa para dentro de `src/`, sem criar redundâncias ou deletar arquivos de maneira incorreta. No Projeto 1 (monolítico sem pastas), ela estruturou toda a arquitetura MVC do zero.
+- **Aprimoramento de Segurança e Cobertura da Skill:**
+  - Durante o processo de validação, constatou-se que a skill gerava recomendações de segurança no relatório da Fase 2 (ex: token de autenticação), mas não forçava a si mesma a validar a cobertura de todas as recomendações na Fase 3, deixando rotas sensíveis desprotegidas no `task-manager-api`.
+  - Para corrigir esse comportamento, a custom skill `refactor-arch` foi atualizada: o `SKILL.md` passou a contar com uma etapa obrigatória de **"Verificação de Cobertura de Segurança (Pós-Auditoria)"** que exige que o agente liste e mapeie explicitamente cada achado no log final; e o `playbook_refatoracao.md` foi enriquecido com a receita **13. Autenticação e Autorização baseada em Token (JWT/Assinatura)** fornecendo exemplos prontos de decorators e middlewares.
 
 ---
 
